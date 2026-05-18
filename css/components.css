@@ -403,6 +403,15 @@
 @media (max-width: 860px) { .form-grid { grid-template-columns: repeat(2,1fr); } }
 @media (max-width: 580px) { .form-grid { grid-template-columns: 1fr; } }
 
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) { .form-grid-2 { grid-template-columns: 1fr; } }
+
 .span-2 { grid-column: span 2; }
 .span-3 { grid-column: span 3; }
 @media (max-width: 860px) { .span-2,.span-3 { grid-column: span 1; } }
@@ -1020,3 +1029,22 @@ select.form-control {
 }
 
 .animate-fadeUp { animation: fadeUp var(--t-slow) both; }
+
+/* Mobile Navigation Bar Overrides */
+@media (max-width: 480px) {
+  .nav-inner {
+    padding: 0 16px;
+    height: 70px;
+  }
+  .nav-logo {
+    font-size: 17px;
+  }
+  .nav-logo-img {
+    height: 38px;
+    margin-right: 10px;
+  }
+  .nav-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+  }
+}
