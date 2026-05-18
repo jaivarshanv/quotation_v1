@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════
-   LANCASTER STEEL — quote.js
-   Quote rendering: sections, grand total, reset
+   APEX INDUSTRIAL — quote.js
+   Quote rendering: sections, grand total, approvals, reset
    ═══════════════════════════════════════════════════ */
 
 'use strict';
@@ -45,37 +45,66 @@ window.populateSection = populateSection;
 function renderQuote(data) {
   LState.lastQuote = data;
 
-  const erect = false;
+  const erect = !!(data.module4 && data.module4.length > 0);
   const currency = 'usd';
-  const project = document.getElementById('clientName').value || 'Unnamed Project';
   const client = document.getElementById('clientName').value || '—';
-  const miles = parseFloat(document.getElementById('deliveryMiles').value) || 0;
+  const clientEmailVal = document.getElementById('clientEmail').value || '—';
+  const clientPhoneVal = document.getElementById('clientPhone').value || '—';
+  const clientAddressVal = document.getElementById('clientAddress').value || '—';
 
-  // Generate a unique quote reference (LS-YYYYMMDD-XXXXX) stored on the data object
+  // Generate a unique quote reference (APEX-YYYYMMDD-XXXXX) stored on the data object
   if (!data.quoteRef) {
     const today = new Date();
     const datePart = today.getFullYear().toString()
       + String(today.getMonth() + 1).padStart(2, '0')
       + String(today.getDate()).padStart(2, '0');
     const randPart = Math.random().toString(36).toUpperCase().slice(2, 7);
-    data.quoteRef = 'LS-' + datePart + '-' + randPart;
+    data.quoteRef = 'APEX-' + datePart + '-' + randPart;
   }
 
-  // Populate modules
-  const t1 = populateSection('rows1', 'tot1', data.module1);
-  const t2 = populateSection('rows2', 'tot2', data.module2);
-  const t3 = populateSection('rows3', 'tot3', data.module3);
-  const t4 = erect ? populateSection('rows4', 'tot4', data.module4) : 0;
-  const t5 = populateSection('rows5', 'tot5', data.module5);
+  // Populate B2B Corporate Letterhead Fields
+  document.getElementById('lblQuoteRef').textContent = data.quoteRef;
+  document.getElementById('lblQuoteDate').textContent = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  document.getElementById('lblClientName').textContent = client;
+  document.getElementById('lblClientEmail').textContent = clientEmailVal;
+  document.getElementById('lblClientPhone').textContent = clientPhoneVal;
+  document.getElementById('lblClientAddress').textContent = clientAddressVal;
 
-  const quoteSections = document.querySelectorAll('.quote-body .qsec');
-  if (quoteSections[0]) quoteSections[0].style.display = t1 > 0 ? '' : 'none';
+  // Populate Rule-based approvals from metadata
+  const approvals = (data._meta && data._meta.approvals) ? data._meta.approvals : {
+    status: 'Auto-Approved',
+    statusClass: 'status-green',
+    marginPercent: 25
+  };
+
+  const badge = document.getElementById('lblApprovalBadge');
+  if (badge) {
+    badge.className = `approval-badge ${approvals.statusClass}`;
+    badge.textContent = approvals.status;
+  }
+
+  const dotFinance = document.getElementById('dotFinance');
+  if (dotFinance) {
+    if (approvals.statusClass === 'status-red') {
+      dotFinance.className = 'approval-log-dot pending'; // Yellow/pending state for director overrides
+    } else {
+      dotFinance.className = 'approval-log-dot'; // Green approved state
+    }
+  }
+
+  // Populate sections
+  const tMaterials = populateSection('rowsMaterials', 'totMaterials', data.module2);
+  const tErect = erect ? populateSection('rowsErect', 'totErect', data.module4) : 0;
 
   const erectSec = document.getElementById('sectionErect');
   if (erectSec) erectSec.style.display = erect ? '' : 'none';
 
   // Grand total
-  const grand = t1 + t2 + t3 + t4 + t5;
+  const grand = tMaterials + tErect;
   const lo = grand * 0.95, hi = grand * 1.05;
   document.getElementById('gtAmount').textContent = fmt(grand);
   document.getElementById('gtRange').textContent =
@@ -100,14 +129,16 @@ function renderQuote(data) {
   output.scrollIntoView({ behavior: 'smooth', block: 'start' });
   setStep(4);
 
-  // Save to Firebase — attach project/client so history can display them
+  // Save to Firebase — attach client profile details for history and admin inspector
   if (window.getAuthUser && window.getAuthUser() && window.dbStore) {
     const user = window.getAuthUser();
     const userData = window.currentUserData || {};
     const enrichedData = {
       ...data,
       clientName: client,
-      deliveryMiles: miles
+      clientEmail: clientEmailVal,
+      clientPhone: clientPhoneVal,
+      clientAddress: clientAddressVal
     };
     window.dbStore.saveUserQuote(user.uid, userData.name || user.email, enrichedData);
   }

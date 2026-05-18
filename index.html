@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lancaster Steel — Building Quote</title>
+  <title>Apex Industrial — RFQ Costing Console</title>
   <link rel="stylesheet" href="css/tokens.css" />
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
@@ -15,8 +15,8 @@
   <!-- ── TOP NAV ──────────────────────────────────────── -->
   <nav class="nav">
     <div class="nav-inner">
-      <div class="nav-logo">Lancaster <span>Steel</span></div>
-      <div class="nav-badge">Building Quote Module</div>
+      <div class="nav-logo">Apex <span>Industrial</span></div>
+      <div class="nav-badge">RFQ Costing Engine</div>
     </div>
   </nav>
 
@@ -42,23 +42,29 @@
   <!-- ── MAIN CONTENT ──────────────────────────────────── -->
   <div class="container" style="padding-bottom: 80px;">
 
-    <!-- CARD: Delivery Details ───────────────────────── -->
-    <div class="card animate-fadeUp" id="cardDelivery" style="animation-delay:.05s">
+    <!-- CARD: Client Information ───────────────────────── -->
+    <div class="card animate-fadeUp" id="cardClientInfo" style="animation-delay:.05s">
+      <div class="card-head">
+        <div class="card-title">Client Information</div>
+      </div>
       <div class="card-body">
-        <form id="deliveryForm" onsubmit="generateQuote(); return false;">
-          <div class="form-grid">
+        <form id="clientForm" onsubmit="generateQuote(); return false;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <div class="form-group">
-              <label class="form-label">Client / Company</label>
-              <input class="form-control" type="text" id="clientName" placeholder="e.g. Smith Construction LLC" />
+              <label class="form-label">Name</label>
+              <input class="form-control" type="text" id="clientName" placeholder="e.g. Smith Construction LLC" required />
             </div>
             <div class="form-group">
-              <label class="form-label">Distance (miles)</label>
-              <input class="form-control" type="number" id="deliveryMiles" placeholder="e.g. 75" min="0" />
+              <label class="form-label">Email</label>
+              <input class="form-control" type="email" id="clientEmail" placeholder="e.g. client@example.com" required />
             </div>
             <div class="form-group">
-              <label class="form-label">Client Email</label>
-              <input class="form-control" type="email" id="clientEmail" placeholder="e.g. client@example.com"
-                value="example@gmail.com" required />
+              <label class="form-label">M.no</label>
+              <input class="form-control" type="tel" id="clientPhone" placeholder="e.g. +1 (555) 019-2834" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Address</label>
+              <input class="form-control" type="text" id="clientAddress" placeholder="e.g. 100 Main St, New York, NY" required />
             </div>
           </div>
         </form>
@@ -68,9 +74,7 @@
     <!-- CARD: Input Method ───────────────────────────── -->
     <div class="card animate-fadeUp" id="cardInput" style="animation-delay:.12s">
       <div class="card-head">
-        <div class="card-title">
-          Paste text or upload a CSV(or xlsx)
-        </div>
+        <div class="card-title">RFQ Bill of Materials (BOM)</div>
       </div>
       <div class="card-body">
         <div>
@@ -98,7 +102,7 @@
               <code>unit</code>, <code>grade/spec</code> (optional), <code>length_ft</code> (optional). Any reasonable
               CSV layout is accepted.
               <div style="margin-top:12px;">
-                <a class="btn btn-secondary" href="csv-template.csv" download="lancaster-steel-csv-template.csv">
+                <a class="btn btn-secondary" href="csv-template.csv" download="apex-industrial-csv-template.csv">
                   Download CSV template
                 </a>
               </div>
@@ -158,21 +162,51 @@
     <div class="loader-overlay" id="loader">
       <div class="loader-ring"></div>
       <div class="loader-stage" id="loaderStage">Parsing input data</div>
-      <div class="loader-sub" id="loaderSub">Connecting to Lancaster pricing engine</div>
+      <div class="loader-sub" id="loaderSub">Connecting to Apex Industrial pricing engine</div>
     </div>
 
     <!-- QUOTE OUTPUT ────────────────────────────────────── -->
     <div id="quoteOutput">
 
+      <!-- Apex Corporate Header -->
+      <div class="quote-header">
+        <div class="quote-brand">
+          <div class="quote-logo">Apex <span>Industrial</span></div>
+          <div>
+            <div class="quote-ref" id="lblQuoteRef">REF-000000</div>
+            <div class="quote-ref-date" id="lblQuoteDate">May 18, 2026</div>
+          </div>
+        </div>
+        <div class="quote-meta-grid">
+          <div>
+            <div class="quote-meta-label">Name</div>
+            <div class="quote-meta-val" id="lblClientName">—</div>
+          </div>
+          <div>
+            <div class="quote-meta-label">Email</div>
+            <div class="quote-meta-val" id="lblClientEmail">—</div>
+          </div>
+          <div>
+            <div class="quote-meta-label">M.no</div>
+            <div class="quote-meta-val" id="lblClientPhone">—</div>
+          </div>
+          <div>
+            <div class="quote-meta-label">Address</div>
+            <div class="quote-meta-val" id="lblClientAddress">—</div>
+          </div>
+        </div>
+      </div>
+
       <div class="quote-body">
 
-        <div class="qsec">
+        <!-- Materials Cost Section -->
+        <div class="qsec" id="sectionMaterials">
           <div class="qsec-head" onclick="toggleSec(this)">
             <div class="qsec-label">
-              Design &amp; Detailing
+              Materials Cost
             </div>
             <div class="qsec-right">
-              <span class="qsec-total" id="tot1">$0.00</span>
+              <span class="qsec-total" id="totMaterials">$0.00</span>
               <span class="qsec-chevron">▶</span>
             </div>
           </div>
@@ -186,71 +220,19 @@
                   <th>Amount (USD)</th>
                 </tr>
               </thead>
-              <tbody id="rows1"></tbody>
+              <tbody id="rowsMaterials"></tbody>
             </table>
           </div>
         </div>
 
-        <!-- Module 2 -->
-        <div class="qsec">
-          <div class="qsec-head" onclick="toggleSec(this)">
-            <div class="qsec-label">
-              Material &amp; Fabrication
-            </div>
-            <div class="qsec-right">
-              <span class="qsec-total" id="tot2">$0.00</span>
-              <span class="qsec-chevron">▶</span>
-            </div>
-          </div>
-          <div class="qsec-body">
-            <table class="line-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Qty / Weight</th>
-                  <th>Rate</th>
-                  <th>Amount (USD)</th>
-                </tr>
-              </thead>
-              <tbody id="rows2"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Module 3 -->
-        <div class="qsec">
-          <div class="qsec-head" onclick="toggleSec(this)">
-            <div class="qsec-label">
-              Transport &amp; Delivery
-            </div>
-            <div class="qsec-right">
-              <span class="qsec-total" id="tot3">$0.00</span>
-              <span class="qsec-chevron">▶</span>
-            </div>
-          </div>
-          <div class="qsec-body">
-            <table class="line-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Basis</th>
-                  <th>Rate</th>
-                  <th>Amount (USD)</th>
-                </tr>
-              </thead>
-              <tbody id="rows3"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Module 4 -->
-        <div class="qsec" id="sectionErect">
+        <!-- Erection & Field Work Section -->
+        <div class="qsec" id="sectionErect" style="display:none;">
           <div class="qsec-head" onclick="toggleSec(this)">
             <div class="qsec-label">
               Erection &amp; Field Work
             </div>
             <div class="qsec-right">
-              <span class="qsec-total" id="tot4">$0.00</span>
+              <span class="qsec-total" id="totErect">$0.00</span>
               <span class="qsec-chevron">▶</span>
             </div>
           </div>
@@ -264,38 +246,34 @@
                   <th>Amount (USD)</th>
                 </tr>
               </thead>
-              <tbody id="rows4"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Module 5 -->
-        <div class="qsec">
-          <div class="qsec-head" onclick="toggleSec(this)">
-            <div class="qsec-label">
-              Margin
-            </div>
-            <div class="qsec-right">
-              <span class="qsec-total" id="tot5">$0.00</span>
-              <span class="qsec-chevron">▶</span>
-            </div>
-          </div>
-          <div class="qsec-body">
-            <table class="line-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Basis</th>
-                  <th>Rate</th>
-                  <th>Amount (USD)</th>
-                </tr>
-              </thead>
-              <tbody id="rows5"></tbody>
+              <tbody id="rowsErect"></tbody>
             </table>
           </div>
         </div>
 
       </div><!-- /quote-body -->
+
+      <!-- B2B Margin Approval Registry -->
+      <div class="approval-box" id="approvalBox">
+        <div class="approval-status-wrap">
+          <div class="quote-meta-label" style="margin-bottom: 0;">Authorization Status</div>
+          <span class="approval-badge status-green" id="lblApprovalBadge">Auto-Approved</span>
+        </div>
+        <div class="approval-log">
+          <div class="approval-log-item">
+            <span class="approval-log-dot"></span>
+            Costing Eng.
+          </div>
+          <div class="approval-log-item">
+            <span class="approval-log-dot"></span>
+            Prod. Planner
+          </div>
+          <div class="approval-log-item">
+            <span class="approval-log-dot" id="dotFinance"></span>
+            Finance Admin
+          </div>
+        </div>
+      </div>
 
       <div class="grand-total">
         <div>
@@ -305,6 +283,22 @@
         <div style="text-align:right">
           <div class="gt-amount" id="gtAmount">$0.00</div>
           <div class="gt-inr" id="gtInr" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- B2B Authenticity & Print Mark -->
+      <div class="quote-footer-mark">
+        <div>
+          <strong>Apex Industrial &amp; Coil Processing Corp.</strong><br>
+          Authorized electronic RFQ summary. Digitally signed &amp; verified.
+        </div>
+        <div class="qr-placeholder">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--ls-charcoal)">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+            <path d="M14 14h2v2h-2z M18 18h3v3h-3z M14 20h2v1h-2z M18 14h3v2h-3z"></path>
+          </svg>
         </div>
       </div>
 
@@ -321,7 +315,7 @@
 
   <!-- ── FOOTER ────────────────────────────────────────── -->
   <footer class="site-footer">
-    <p>HighSteel · Building Fabrication Estimator · Lancaster County, PA</p>
+    <p>Apex Industrial &amp; Coil Processing Corp. · Enterprise Costing Core</p>
   </footer>
 
   <!-- ── SCRIPTS (load order matters) ─────────────────── -->

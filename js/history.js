@@ -106,8 +106,6 @@ function openDrawer(q) {
   const weight = data.totalWeightTons ? `${data.totalWeightTons} short tons` : "—";
   const mode = meta.source || "csv";
   const modeLabel = { csv: "BOM / CSV Upload", preset: "Quick Presets", image: "AI Floor Plan" }[mode] || mode;
-  const priceDate = meta.priceDate || "—";
-  const priceBand = meta.priceBand || "—";
 
   const grand = ["module1", "module2", "module3", "module4", "module5"]
     .flatMap(m => data[m] || [])
@@ -122,45 +120,45 @@ function openDrawer(q) {
       <div class="meta-cell__label">Input Method</div>
       <div class="meta-cell__value">${modeLabel}</div>
     </div>
-    ${data.clientName ? `
+    ${(data.clientName || q.clientName) ? `
     <div class="meta-cell">
-      <div class="meta-cell__label">Client</div>
-      <div class="meta-cell__value">${esc(data.clientName)}</div>
+      <div class="meta-cell__label">Client Name</div>
+      <div class="meta-cell__value">${esc(data.clientName || q.clientName)}</div>
     </div>` : ""}
-    ${data.deliveryCity ? `
+    ${(data.clientEmail || q.clientEmail) ? `
     <div class="meta-cell">
-      <div class="meta-cell__label">Delivery</div>
-      <div class="meta-cell__value">${esc(data.deliveryCity)}${data.deliveryMiles ? " · " + data.deliveryMiles + " mi" : ""}</div>
+      <div class="meta-cell__label">Client Email</div>
+      <div class="meta-cell__value">${esc(data.clientEmail || q.clientEmail)}</div>
     </div>` : ""}
+    ${(data.clientPhone || q.clientPhone) ? `
     <div class="meta-cell">
-      <div class="meta-cell__label">Price Date</div>
-      <div class="meta-cell__value">${priceDate}</div>
-    </div>
-    <div class="meta-cell">
-      <div class="meta-cell__label">Price Band</div>
-      <div class="meta-cell__value" style="font-size:12px;">${priceBand}</div>
-    </div>
+      <div class="meta-cell__label">Mobile Number</div>
+      <div class="meta-cell__value">${esc(data.clientPhone || q.clientPhone)}</div>
+    </div>` : ""}
+    ${(data.clientAddress || q.clientAddress) ? `
+    <div class="meta-cell" style="grid-column: span 2;">
+      <div class="meta-cell__label">Delivery Address</div>
+      <div class="meta-cell__value">${esc(data.clientAddress || q.clientAddress)}</div>
+    </div>` : ""}
   `;
 
-  // ── Modules ───────────────────────────────────────
-  const MODULE_TITLES = {
-    module2: "Module 2 — Material & Fabrication",
-    module3: "Module 3 — Logistics & Freight",
-    module4: "Module 4 — Erection & Field Work",
-    module5: "Module 5 — Contingency & Tax"
+  // ── Sections ───────────────────────────────────────
+  const SECTION_TITLES = {
+    module2: "Section 1 — Materials & Processing",
+    module4: "Section 2 — Erection & Field Work"
   };
 
   const modulesEl = document.getElementById("drawerModules");
   modulesEl.innerHTML = "";
 
-  let moduleIdx = 0;
-  for (const [key, title] of Object.entries(MODULE_TITLES)) {
+  let sectionIdx = 0;
+  for (const [key, title] of Object.entries(SECTION_TITLES)) {
     const rows = data[key] || [];
     if (rows.length === 0) continue;
 
-    const modTotal = rows.reduce((a, r) => a + (r.amount || 0), 0);
-    const blockId = `mod-body-${moduleIdx}`;
-    const chevId = `mod-chev-${moduleIdx}`;
+    const sectTotal = rows.reduce((a, r) => a + (r.amount || 0), 0);
+    const blockId = `mod-body-${sectionIdx}`;
+    const chevId = `mod-chev-${sectionIdx}`;
 
     const block = document.createElement("div");
     block.className = "mod-block";
@@ -168,7 +166,7 @@ function openDrawer(q) {
       <div class="mod-head" onclick="toggleModBlock('${blockId}','${chevId}')">
         <div class="mod-label">${title}</div>
         <div class="mod-right">
-          <span class="mod-total">${fmt(modTotal)}</span>
+          <span class="mod-total">${fmt(sectTotal)}</span>
           <span class="mod-chev" id="${chevId}">▶</span>
         </div>
       </div>
@@ -184,14 +182,14 @@ function openDrawer(q) {
       </div>
     `;
     modulesEl.appendChild(block);
-    moduleIdx++;
+    sectionIdx++;
   }
 
-  // Auto-expand Module 2 (most interesting)
-  const m2body = document.getElementById("mod-body-1");
-  const m2chev = document.getElementById("mod-chev-1");
-  if (m2body) { m2body.classList.add("open"); }
-  if (m2chev) { m2chev.classList.add("open"); }
+  // Auto-expand Section 1 (most interesting)
+  const s1body = document.getElementById("mod-body-0");
+  const s1chev = document.getElementById("mod-chev-0");
+  if (s1body) { s1body.classList.add("open"); }
+  if (s1chev) { s1chev.classList.add("open"); }
 
   // ── Grand total ────────────────────────────────────
   document.getElementById("drawerGrandTotal").textContent = fmt(grand);
@@ -200,7 +198,7 @@ function openDrawer(q) {
   document.getElementById("drawerDisclaimer").textContent =
     meta.disclaimer
       ? meta.disclaimer
-      : "This estimate is based on Lancaster County, PA mill rates. Final costs may vary by ±$500 based on market conditions and jobsite factors.";
+      : "This estimate is based on Apex Industrial mill index rates. Final costs may vary by ±$500 based on market conditions and processing factors.";
 
   // ── Show ───────────────────────────────────────────
   document.getElementById("modalOverlay").classList.add("open");

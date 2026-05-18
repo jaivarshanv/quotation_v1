@@ -7,7 +7,7 @@ import {
 
 // ── Admin email whitelist ──────────────────────────────
 const ADMIN_EMAILS = [
-  "admin@lancastersteel.com",
+  "admin@apexindustrial.com",
   "jaivarshanv@gmail.com"
 ];
 

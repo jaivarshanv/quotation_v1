@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   LANCASTER STEEL — engine-local.js
+   APEX INDUSTRIAL — engine-local.js
    Catalog loaded dynamically from Firebase.
    Matching: pure local token-scoring algorithm (no API dependency).
    ═══════════════════════════════════════════════════ */
@@ -50,6 +50,7 @@ async function loadCatalog() {
         tags: Array.isArray(d.tags) ? d.tags.map(t => String(t).toLowerCase()) : [],
         priceLb: parseFloat(d.priceLb) || 0,
         fabLb: parseFloat(d.fabLb) || 0,
+        marginPct: d.marginPct !== undefined ? parseFloat(d.marginPct) : undefined,
         note: d.note || ''
       });
     });
@@ -76,6 +77,12 @@ function scoreItemAgainstCatalog(inputName) {
   const inputTokens = tokenize(inputName);
   if (!inputTokens.length || !CATALOG.length) return { catalogEntry: null, score: 0 };
 
+  // Explicit blacklist to reject fictional or non-steel materials instantly
+  const BLACKLIST = ['vibranium', 'unobtanium', 'unobtainium', 'kryptonite', 'adamantium', 'mythril', 'shielding', 'wood', 'concrete', 'plastic', 'glass', 'rubber'];
+  if (inputTokens.some(t => BLACKLIST.includes(t))) {
+    return { catalogEntry: null, score: 0 };
+  }
+
   let best = { catalogEntry: null, score: 0 };
 
   for (const entry of CATALOG) {
@@ -88,14 +95,15 @@ function scoreItemAgainstCatalog(inputName) {
     let matches = 0;
     inputSet.forEach(t => { if (catalogSet.has(t)) matches++; });
 
-    // Partial-token bonus for longer tokens
+    // Partial-token bonus for longer tokens (maximum of one 0.4 bonus per input token to prevent tag-duplication inflation)
     inputTokens.forEach(t => {
       if (t.length >= 3) {
-        catalogTokens.forEach(ct => {
-          if (ct.length >= 3 && ct !== t && (ct.includes(t) || t.includes(ct))) {
-            matches += 0.4;
-          }
-        });
+        const hasPartial = catalogTokens.some(ct =>
+          ct.length >= 3 && ct !== t && (ct.includes(t) || t.includes(ct))
+        );
+        if (hasPartial) {
+          matches += 0.4;
+        }
       }
     });
 
@@ -178,14 +186,14 @@ const cleanName = v => String(v || '')
 //  calcFromText
 // ══════════════════════════════════════════════════════
 async function calcFromText(text, opts = {}) {
-  const { miles = 0, erection = 'no', buildType = 'residential' } = opts;
+  const { erection = 'no', buildType = 'residential' } = opts;
   const lines = String(text || '').split('\n').map(l => l.trim()).filter(Boolean);
   if (!lines.length) throw new Error('No text input found. Paste requirements into the text box.');
 
   const unitPattern = '(?:tons?|tonnes?|t|lbs?|pounds?|kg|kgs?|pcs?|pieces?|sqft|sq\\s*ft|ft|feet)';
   const qtyUnitRx = new RegExp(`([0-9][0-9,]*(?:\\.[0-9]+)?)\\s*(${unitPattern})\\b`, 'gi');
 
-  let module2 = [], totalWeightLbs = 0, unavailable = [];
+  let rawMaterials = [], totalWeightLbs = 0, unavailable = [];
 
   for (const rawLine of lines) {
     const fragments = rawLine.split(/\s*;\s*|\s+,\s+/).map(p => p.trim()).filter(Boolean);
@@ -226,34 +234,36 @@ async function calcFromText(text, opts = {}) {
       totalWeightLbs += weightLbs;
       const pricePerLb = catalogEntry.priceLb || PRICE_BANDS[DEFAULT_BAND];
       const fabPerLb = catalogEntry.fabLb || 0;
-      const lineTotal = weightLbs * (pricePerLb + fabPerLb);
-      const tons = weightLbs / 2000;
-      const effectiveRate = lineTotal / weightLbs;
+      const marginPct = catalogEntry.marginPct !== undefined ? catalogEntry.marginPct : (CONTINGENCY_PCT * 100);
+      const loadedRate = (pricePerLb + fabPerLb) * (1 + marginPct / 100);
+      const lineTotal = weightLbs * loadedRate;
 
-      module2.push({
-        item: catalogEntry.name,
-        basis: tons >= 1
-          ? `${tons.toFixed(2)} tons · $${pricePerLb.toFixed(3)}/lb`
-          : `${Math.round(weightLbs).toLocaleString()} lbs · $${pricePerLb.toFixed(3)}/lb`,
-        rate: `$${effectiveRate.toFixed(3)}/lb`,
-        amount: Math.round(lineTotal),
-        note: ''
+      rawMaterials.push({
+        itemName: catalogEntry.name,
+        qty: entry.qty,
+        unit: entry.unit,
+        weightLbs: weightLbs,
+        basePriceLb: pricePerLb,
+        fabLb: fabPerLb,
+        marginPct: marginPct,
+        loadedRate: loadedRate,
+        amount: Math.round(lineTotal)
       });
     }
   }
 
-  if (!module2.length) {
-    if (unavailable.length) return _buildQuoteObject([], 0, miles, erection, buildType, 'text', unavailable);
+  if (!rawMaterials.length) {
+    if (unavailable.length) return _buildQuoteObject([], 0, erection, buildType, 'text', unavailable);
     throw new Error('No available items parsed from text. Check the pasted requirements and the catalog.');
   }
-  return _buildQuoteObject(module2, totalWeightLbs, miles, erection, buildType, 'text', unavailable);
+  return _buildQuoteObject(rawMaterials, totalWeightLbs, erection, buildType, 'text', unavailable);
 }
 
 // ══════════════════════════════════════════════════════
 //  calcFromCsv
 // ══════════════════════════════════════════════════════
 async function calcFromCsv(csvText, opts = {}) {
-  const { miles = 0, erection = 'no', buildType = 'residential' } = opts;
+  const { erection = 'no', buildType = 'residential' } = opts;
   const lines = csvText.trim().split('\n').filter(Boolean);
   if (lines.length < 2) throw new Error('CSV must have a header row and at least one data row.');
 
@@ -273,7 +283,7 @@ async function calcFromCsv(csvText, opts = {}) {
     }
   }
 
-  let module2 = [], totalWeightLbs = 0, unavailable = [];
+  let rawMaterials = [], totalWeightLbs = 0, unavailable = [];
 
   for (let i = 1; i < lines.length; i++) {
     const cells = parseCsvLine(lines[i]);
@@ -301,34 +311,36 @@ async function calcFromCsv(csvText, opts = {}) {
     totalWeightLbs += weightLbs;
     const pricePerLb = catalogEntry.priceLb || PRICE_BANDS[DEFAULT_BAND];
     const fabPerLb = catalogEntry.fabLb || 0;
-    const lineTotal = weightLbs * (pricePerLb + fabPerLb);
-    const tons = weightLbs / 2000;
-    const effectiveRate = lineTotal / weightLbs;
+    const marginPct = catalogEntry.marginPct !== undefined ? catalogEntry.marginPct : (CONTINGENCY_PCT * 100);
+    const loadedRate = (pricePerLb + fabPerLb) * (1 + marginPct / 100);
+    const lineTotal = weightLbs * loadedRate;
 
-    module2.push({
-      item: catalogEntry.name + (grade ? ` (${grade})` : ''),
-      basis: tons >= 1
-        ? `${tons.toFixed(2)} tons · $${pricePerLb.toFixed(3)}/lb`
-        : `${Math.round(weightLbs).toLocaleString()} lbs · $${pricePerLb.toFixed(3)}/lb`,
-      rate: `$${effectiveRate.toFixed(3)}/lb`,
-      amount: Math.round(lineTotal),
-      note: ''
+    rawMaterials.push({
+      itemName: catalogEntry.name + (grade ? ` (${grade})` : ''),
+      qty: qty,
+      unit: unit,
+      weightLbs: weightLbs,
+      basePriceLb: pricePerLb,
+      fabLb: fabPerLb,
+      marginPct: marginPct,
+      loadedRate: loadedRate,
+      amount: Math.round(lineTotal)
     });
   }
 
-  if (!module2.length) {
-    if (unavailable.length) return _buildQuoteObject([], 0, miles, erection, buildType, 'csv', unavailable);
+  if (!rawMaterials.length) {
+    if (unavailable.length) return _buildQuoteObject([], 0, erection, buildType, 'csv', unavailable);
     throw new Error('No available items found in CSV. Check column headers or the catalog.');
   }
-  return _buildQuoteObject(module2, totalWeightLbs, miles, erection, buildType, 'csv', unavailable);
+  return _buildQuoteObject(rawMaterials, totalWeightLbs, erection, buildType, 'csv', unavailable);
 }
 
 // ══════════════════════════════════════════════════════
 //  calcFromPreset  (entry.id = Firebase catalog doc ID)
 // ══════════════════════════════════════════════════════
 function calcFromPreset(presetEntries, opts = {}) {
-  const { miles = 0, erection = 'no', buildType = 'residential' } = opts;
-  let module2 = [], totalWeightLbs = 0;
+  const { erection = 'no', buildType = 'residential' } = opts;
+  let rawMaterials = [], totalWeightLbs = 0;
 
   for (const entry of presetEntries) {
     const cfg = CATALOG.find(c => c.id === entry.id);
@@ -339,39 +351,46 @@ function calcFromPreset(presetEntries, opts = {}) {
 
     const pricePerLb = cfg.priceLb || PRICE_BANDS[DEFAULT_BAND];
     const fabPerLb = cfg.fabLb || 0;
-    const lineTotal = weightLbs * (pricePerLb + fabPerLb);
-    const tons = weightLbs / 2000;
-    const effectiveRate = lineTotal / weightLbs;
+    const marginPct = cfg.marginPct !== undefined ? cfg.marginPct : (CONTINGENCY_PCT * 100);
+    const loadedRate = (pricePerLb + fabPerLb) * (1 + marginPct / 100);
+    const lineTotal = weightLbs * loadedRate;
 
     totalWeightLbs += weightLbs;
-    module2.push({
-      item: cfg.name,
-      basis: `${tons.toFixed(2)} tons (${Math.round(weightLbs).toLocaleString()} lbs)`,
-      rate: `$${effectiveRate.toFixed(3)}/lb`,
-      amount: Math.round(lineTotal),
-      note: ''
+    rawMaterials.push({
+      itemName: cfg.name,
+      qty: entry.qty,
+      unit: entry.unit,
+      weightLbs: weightLbs,
+      basePriceLb: pricePerLb,
+      fabLb: fabPerLb,
+      marginPct: marginPct,
+      loadedRate: loadedRate,
+      amount: Math.round(lineTotal)
     });
   }
 
-  if (!module2.length) throw new Error('No valid quantities entered.');
-  return _buildQuoteObject(module2, totalWeightLbs, miles, erection, buildType, 'preset', []);
+  if (!rawMaterials.length) throw new Error('No valid quantities entered.');
+  return _buildQuoteObject(rawMaterials, totalWeightLbs, erection, buildType, 'preset', []);
 }
 
 // ══════════════════════════════════════════════════════
 //  _buildQuoteObject (shared)
 // ══════════════════════════════════════════════════════
-function _buildQuoteObject(module2, totalWeightLbs, miles, erection, buildType, sourceMode, unavailableList = []) {
+function _buildQuoteObject(rawMaterials, totalWeightLbs, erection, buildType, sourceMode, unavailableList = []) {
   const tons = totalWeightLbs / 2000;
 
-  const logisticsCost = miles > 0 ? Math.round(miles * LOGISTICS_RATE) : 0;
-  const truckloads = Math.max(1, Math.ceil(tons / 22));
-  const module3 = [{
-    item: 'Freight & Delivery',
-    basis: miles > 0 ? `${miles} mi · ${truckloads} truckload${truckloads > 1 ? 's' : ''}` : 'Local pickup',
-    rate: `$${LOGISTICS_RATE}/mi`,
-    amount: logisticsCost,
-    note: miles > 0 ? 'Lancaster plant → delivery site' : 'Pickup at Lancaster plant'
-  }];
+  // Aggregate loaded materials into a single row for the client quotation table
+  const totalMaterialsAmount = rawMaterials.reduce((sum, item) => sum + item.amount, 0);
+  const module2 = [];
+  if (totalMaterialsAmount > 0) {
+    module2.push({
+      item: 'Structural & Plate Steel Materials',
+      basis: 'Fully Loaded B2B Costing',
+      rate: '—',
+      amount: totalMaterialsAmount,
+      note: 'Includes base mill price, fabrication services, and project contingency margin.'
+    });
+  }
 
   let module4 = [];
   if (erection === 'yes') {
@@ -381,37 +400,58 @@ function _buildQuoteObject(module2, totalWeightLbs, miles, erection, buildType, 
       basis: `${tons.toFixed(2)} tons × $${ERECT_PER_TON_MID}/ton`,
       rate: `$${ERECT_PER_TON_MID}/ton`,
       amount: cost,
-      note: 'Includes crane mobilisation, rigging crew, and field supervision'
+      note: 'Field assembly, crane operations, and site management safety compliance'
     }];
   }
 
-  const subTotal = [module2, module3, module4].flat().reduce((a, r) => a + r.amount, 0);
-  const contingencyAmt = subTotal > 0 ? Math.max(0.01, Math.round(subTotal * CONTINGENCY_PCT * 100) / 100) : 0;
-  const module5 = [{
-    item: 'Margin',
-    basis: `${(CONTINGENCY_PCT * 100).toFixed(0)}% of $${subTotal.toLocaleString()}`,
-    rate: `${(CONTINGENCY_PCT * 100).toFixed(0)}%`,
-    amount: contingencyAmt,
-    note: 'PA sales tax compliance, waste allowance, and scope variance buffer'
-  }];
+  // Calculate Weighted blended margin percentage for approvals validation
+  let totalBaseCost = 0;
+  let totalMarginCost = 0;
+  rawMaterials.forEach(m => {
+    const base = m.weightLbs * (m.basePriceLb + m.fabLb);
+    const margin = base * (m.marginPct / 100);
+    totalBaseCost += base;
+    totalMarginCost += margin;
+  });
+
+  const blendedMarginPercent = totalBaseCost > 0
+    ? Math.round(totalMarginCost / totalBaseCost * 100)
+    : Math.round(CONTINGENCY_PCT * 100);
+
+  let approvalStatus = 'Requires Executive/Director Override';
+  let approvalClass = 'status-red';
+
+  if (blendedMarginPercent >= 25) {
+    approvalStatus = 'Auto-Approved';
+    approvalClass = 'status-green';
+  } else if (blendedMarginPercent >= 15) {
+    approvalStatus = 'Pending Sales Manager Sign-off';
+    approvalClass = 'status-yellow';
+  }
 
   const buildLabel = { residential: 'Residential', commercial: 'Commercial', industrial: 'Industrial' }[buildType] || buildType;
 
   return {
-    summary: `${buildLabel} project · ${tons.toFixed(2)} short tons · Lancaster County, PA · May 2026 pricing. Note: Final costs may vary by ±$500.`,
+    summary: `${buildLabel} run · ${tons.toFixed(2)} short tons · May 2026 mill indexing.`,
     totalWeightTons: parseFloat(tons.toFixed(2)),
     module1: [],
     module2,
-    module3,
+    module3: [],
     module4,
-    module5,
+    module5: [],
     _meta: {
       source: sourceMode,
       priceDate: 'May 2026',
-      priceBand: `Mid ($${PRICE_BANDS.mid}/lb delivered Lancaster County)`,
-      grade: 'Per catalog item; ASTM A615 Gr.60 assumed unless stated',
-      disclaimer: 'Not a substitute for PE-stamped engineering takeoff.',
-      unavailable: unavailableList || []
+      priceBand: `Standard ($${PRICE_BANDS.mid.toFixed(3)}/lb base)`,
+      grade: 'ASTM Grade Steel - Catalog Certified',
+      disclaimer: 'Electronic RFQ pricing summary - official contract binding pending final review.',
+      unavailable: unavailableList || [],
+      rawMaterials: rawMaterials, // FULL details saved for Admin inspector!
+      approvals: {
+        marginPercent: blendedMarginPercent,
+        status: approvalStatus,
+        statusClass: approvalClass
+      }
     }
   };
 }

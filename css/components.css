@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   LANCASTER STEEL — Components
+   APEX INDUSTRIAL — Components
    ═══════════════════════════════════════════════════ */
 
 /* ── TOP NAV ─────────────────────────────────────── */
@@ -18,7 +18,7 @@
   max-width: 1040px;
   margin: 0 auto;
   padding: 0 24px;
-  height: 52px;
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -26,11 +26,27 @@
 }
 
 .nav-logo {
-  font-size: 17px;
-  font-weight: 600;
+  display: flex;
+  align-items: center;
+  font-size: 20px;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--ls-black);
   white-space: nowrap;
+}
+
+.nav-logo-img {
+  height: 48px;
+  max-height: 48px;
+  width: auto;
+  object-fit: contain;
+  margin-right: 14px;
+  border-radius: 6px;
+  transition: transform 0.2s;
+}
+
+.nav-logo-img:hover {
+  transform: scale(1.05);
 }
 
 .nav-logo span {
@@ -854,6 +870,145 @@ select.form-control {
   .quote-body { border: 2px solid #000 !important; border-top: none !important; }
   .line-table th { background: #eee !important; border-bottom: 1px solid #000 !important; }
   .line-table td { border-bottom: 1px solid #000 !important; }
+}
+
+/* ── APEX CORPORATE QUOTATION ADDITIONS ───────────── */
+.quote-header {
+  padding: 32px;
+  background: var(--ls-white);
+  border-bottom: 1px solid var(--ls-divider);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+}
+.quote-brand {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.quote-logo {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ls-black);
+  letter-spacing: -0.03em;
+}
+.quote-logo span {
+  color: var(--ls-mid);
+  font-weight: 400;
+}
+.quote-ref {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ls-black);
+  text-align: right;
+}
+.quote-ref-date {
+  font-size: 12px;
+  color: var(--ls-mid);
+  margin-top: 4px;
+}
+.quote-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  font-size: 13px;
+}
+.quote-meta-label {
+  color: var(--ls-mid);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.quote-meta-val {
+  color: var(--ls-black);
+  font-weight: 500;
+}
+
+/* Approval Box */
+.approval-box {
+  padding: 20px 32px;
+  background: var(--ls-bg);
+  border-top: 1px solid var(--ls-divider);
+  border-bottom: 1px solid var(--ls-divider);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.approval-status-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.approval-badge {
+  padding: 6px 12px;
+  border-radius: var(--r-sm);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.status-green {
+  background: var(--ls-green-l);
+  color: var(--ls-green);
+  border: 1px solid rgba(21, 128, 61, 0.2);
+}
+.status-yellow {
+  background: var(--ls-gold-l);
+  color: var(--ls-gold);
+  border: 1px solid rgba(180, 83, 9, 0.2);
+}
+.status-red {
+  background: var(--ls-red-l);
+  color: var(--ls-red);
+  border: 1px solid rgba(185, 28, 28, 0.2);
+}
+.approval-log {
+  display: flex;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--ls-mid);
+}
+.approval-log-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.approval-log-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ls-green);
+}
+.approval-log-dot.pending {
+  background: var(--ls-gold);
+}
+
+/* Authenticity Mark */
+.quote-footer-mark {
+  padding: 20px 32px;
+  border-top: 1px solid var(--ls-divider);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-size: 11px;
+  color: var(--ls-mid);
+}
+.qr-placeholder {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--ls-divider);
+  border-radius: var(--r-sm);
+  padding: 4px;
+  background: var(--ls-white);
+  opacity: 0.8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* ── ANIMATIONS ───────────────────────────────────── */

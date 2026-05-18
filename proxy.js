@@ -1,4 +1,4 @@
-// proxy.js — Lancaster Steel pricing proxy
+// proxy.js — Apex Industrial pricing proxy
 // Routes:
 //   POST /v1/messages  → HuggingFace Qwen2-VL-2B-Instruct (image mode only)
 //   POST /v1/email     → EmailJS REST API
@@ -312,7 +312,7 @@ http.createServer((req, res) => {
 
 }).listen(PORT, () => {
   console.log(`\n╔══════════════════════════════════════════════╗`);
-  console.log(`║  Lancaster Steel — Pricing Proxy             ║`);
+  console.log(`║  Apex Industrial — Pricing Proxy             ║`);
   console.log(`╠══════════════════════════════════════════════╣`);
   console.log(`║  Server  : http://localhost:${PORT}             ║`);
   console.log(`║  CSV/Preset: Local engine (zero API)         ║`);

@@ -1,33 +1,33 @@
 /* ═══════════════════════════════════════════════════
-   LANCASTER STEEL — Design Tokens
-   Apple-inspired: crisp white, SF typography, glass
+   APEX INDUSTRIAL — Design Tokens
+   Premium Minimalist Enterprise Theme
    ═══════════════════════════════════════════════════ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
   /* Core palette */
-  --ls-black:    #1d1d1f;
-  --ls-dark:     #2d2d2f;
-  --ls-charcoal: #3d3d3f;
-  --ls-mid:      #6e6e73;
-  --ls-soft:     #aeaeb2;
-  --ls-divider:  #d2d2d7;
-  --ls-bg:       #f5f5f7;
+  --ls-black:    #0f172a; /* Slate 900 */
+  --ls-dark:     #1e293b; /* Slate 800 */
+  --ls-charcoal: #334155; /* Slate 700 */
+  --ls-mid:      #64748b; /* Slate 500 */
+  --ls-soft:     #94a3b8; /* Slate 400 */
+  --ls-divider:  #e2e8f0; /* Slate 200 */
+  --ls-bg:       #f8fafc; /* Slate 50 */
   --ls-white:    #ffffff;
 
-  /* Brand accent — deep steel blue */
-  --ls-accent:   #0071e3;
-  --ls-accent-h: #0077ed;
-  --ls-accent-l: #e8f1fd;
-  --ls-gold:     #bf8f00;
-  --ls-gold-l:   #fdf5dc;
-  --ls-green:    #1d7a4f;
-  --ls-green-l:  #eaf6f0;
-  --ls-red:      #c00;
-  --ls-red-l:    #fff0f0;
-  --ls-amber:    #7a5c00;
-  --ls-amber-l:  #fdf8e6;
+  /* Brand accent — premium slate-navy */
+  --ls-accent:   #0f172a; /* Sophisticated B2B slate-900 */
+  --ls-accent-h: #1e293b;
+  --ls-accent-l: #f1f5f9;
+  --ls-gold:     #b45309; /* Amber 700 */
+  --ls-gold-l:   #fef3c7;
+  --ls-green:    #15803d; /* Green 700 */
+  --ls-green-l:  #dcfce7;
+  --ls-red:      #b91c1c; /* Red 700 */
+  --ls-red-l:    #fee2e2;
+  --ls-amber:    #b45309;
+  --ls-amber-l:  #fef3c7;
 
   /* Typography */
   --font-body:   'Inter', -apple-system, BlinkMacSystemFont, sans-serif;

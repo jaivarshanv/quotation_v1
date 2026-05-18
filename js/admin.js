@@ -68,7 +68,7 @@ async function loadAllQuotes() {
       const grand = ["module1","module2","module3","module4","module5"]
         .flatMap(m => qd[m] || [])
         .reduce((acc, r) => acc + (r.amount || 0), 0);
-      allQuotesData.push({ id: docSnap.id, rawDate, dateStr, rawRef, refStr: rawRef || "—", userName, userId, desc, weightNum, weightStr, grand, grandFmt: grand > 0 ? `$${grand.toLocaleString()}` : "—" });
+      allQuotesData.push({ id: docSnap.id, rawDate, dateStr, rawRef, refStr: rawRef || "—", userName, userId, desc, weightNum, weightStr, grand, grandFmt: grand > 0 ? `$${grand.toLocaleString()}` : "—", fullData: data });
     });
 
     renderQuotesTable();
@@ -134,6 +134,8 @@ function renderQuotesTable() {
     quotes.forEach(item => {
       const tr = document.createElement("tr");
       tr.style.display = "none";
+      tr.style.cursor = "pointer";
+      tr.title = "Click to inspect detailed B2B quote breakdown";
       tr.innerHTML = `
         <td>${item.dateStr}</td>
         <td><span style="font-family:var(--font-mono,monospace);font-size:12px;color:var(--ls-mid);">${item.refStr}</span></td>
@@ -141,6 +143,7 @@ function renderQuotesTable() {
         <td>${item.weightStr}</td>
         <td><strong>${item.grandFmt}</strong></td>
       `;
+      tr.addEventListener("click", () => window.inspectQuote(item));
       tbody.appendChild(tr);
       rows.push(tr);
     });
@@ -198,6 +201,7 @@ async function loadCatalogItems() {
         <td><small>${d.grade || "—"}</small></td>
         <td>$${parseFloat(d.priceLb || 0).toFixed(3)}</td>
         <td>$${parseFloat(d.fabLb || 0).toFixed(3)}</td>
+        <td>${d.marginPct !== undefined ? parseFloat(d.marginPct) + '%' : "—"}</td>
         <td>
           <button class="btn btn-ghost btn-sm" onclick="openItemForm('${docSnap.id}')">Edit</button>
           <button class="btn btn-ghost btn-sm" style="color:#dc2626;" onclick="deleteItem('${docSnap.id}','${(d.name||"").replace(/'/g,"\\'")}')">Delete</button>
@@ -221,6 +225,7 @@ window.openItemForm = async function(docId = null) {
   document.getElementById("itemGrade").value = "";
   document.getElementById("itemPriceLb").value = "";
   document.getElementById("itemFabLb").value = "";
+  document.getElementById("itemMarginPct").value = "";
   document.getElementById("itemNote").value = "";
   document.getElementById("itemMsg").style.display = "none";
 
@@ -233,6 +238,7 @@ window.openItemForm = async function(docId = null) {
         document.getElementById("itemGrade").value   = d.grade || "";
         document.getElementById("itemPriceLb").value = d.priceLb || "";
         document.getElementById("itemFabLb").value   = d.fabLb || "";
+        document.getElementById("itemMarginPct").value = d.marginPct !== undefined ? d.marginPct : "";
         document.getElementById("itemNote").value    = d.note || "";
       }
     } catch (e) { console.error(e); }
@@ -253,17 +259,30 @@ window.saveItem = async function() {
   const grade   = document.getElementById("itemGrade").value.trim();
   const priceLb = parseFloat(document.getElementById("itemPriceLb").value);
   const fabLb   = parseFloat(document.getElementById("itemFabLb").value);
+  const marginPctVal = document.getElementById("itemMarginPct").value.trim();
   const note    = document.getElementById("itemNote").value.trim();
 
   if (!name)                        { showItemMsg("Name is required.", "error");        return; }
   if (isNaN(priceLb) || priceLb <= 0) { showItemMsg("Enter a valid Price/lb.", "error"); return; }
   if (isNaN(fabLb)   || fabLb < 0)    { showItemMsg("Enter a valid Fab/lb.", "error");   return; }
+  
+  let marginPct = undefined;
+  if (marginPctVal !== "") {
+    marginPct = parseFloat(marginPctVal);
+    if (isNaN(marginPct) || marginPct < 0) {
+      showItemMsg("Enter a valid Margin %.", "error");
+      return;
+    }
+  }
 
   const nameTag = name.toLowerCase().trim();
   const tokens = nameTag.split(/[^a-z0-9]+/).filter(Boolean);
   const tags = [...new Set([nameTag, ...tokens])];
 
   const payload = { name, grade, tags, priceLb, fabLb, note, updatedAt: new Date().toISOString() };
+  if (marginPct !== undefined) {
+    payload.marginPct = marginPct;
+  }
 
   try {
     if (docId) {
@@ -289,10 +308,58 @@ window.deleteItem = async function(docId, name) {
   }
 };
 
-
 function showItemMsg(text, type = "success") {
   const el = document.getElementById("itemMsg");
   el.textContent = text;
   el.style.color = type === "success" ? "#16a34a" : "#dc2626";
   el.style.display = "block";
 }
+
+// Detailed Quote Inspector Modal Bindings
+window.inspectQuote = function(item) {
+  const fd = item.fullData || {};
+  const qd = fd.quoteData || {};
+  const meta = qd._meta || {};
+  const rawMaterials = meta.rawMaterials || [];
+
+  // Populate B2B client info
+  document.getElementById("insClientName").textContent = fd.clientName || qd.clientName || fd.userName || "—";
+  document.getElementById("insClientEmail").textContent = fd.clientEmail || qd.clientEmail || "—";
+  document.getElementById("insClientPhone").textContent = fd.clientPhone || qd.clientPhone || "—";
+  document.getElementById("insClientAddress").textContent = fd.clientAddress || qd.clientAddress || "—";
+
+  document.getElementById("insTitle").textContent = `Quote Inspection — ${qd.quoteRef || "REF"}`;
+
+  // Populate materials breakdown
+  const mBody = document.getElementById("insMaterialsBody");
+  mBody.innerHTML = "";
+  
+  if (rawMaterials.length === 0) {
+    mBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:#8e8e93;">No itemized materials saved for this quotation.</td></tr>`;
+  } else {
+    rawMaterials.forEach(m => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td style="padding:10px; border-bottom:1px solid #eee;"><strong>${m.itemName || "—"}</strong></td>
+        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">${Math.round(m.weightLbs).toLocaleString()}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.basePriceLb || 0).toFixed(3)}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.fabLb || 0).toFixed(3)}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">${parseFloat(m.marginPct || 0).toFixed(0)}%</td>
+        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.loadedRate || 0).toFixed(3)}</td>
+        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right; font-weight:700;">$${parseFloat(m.amount || 0).toLocaleString()}</td>
+      `;
+      mBody.appendChild(tr);
+    });
+  }
+
+  document.getElementById("insGrandTotal").textContent = item.grandFmt;
+
+  // Show inspector modal
+  document.getElementById("inspectorOverlay").style.display = "block";
+  document.getElementById("inspectorModal").style.display = "block";
+};
+
+window.closeInspector = function() {
+  document.getElementById("inspectorOverlay").style.display = "none";
+  document.getElementById("inspectorModal").style.display = "none";
+};

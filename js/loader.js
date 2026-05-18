@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   LANCASTER STEEL — loader.js
+   APEX INDUSTRIAL — loader.js
    Animated loading stage indicator
    ═══════════════════════════════════════════════════ */
 
@@ -7,9 +7,9 @@
 
 const LOADER_STAGES = [
   ['Parsing input data', 'Extracting quantities, materials, and specifications'],
-  ['Sourcing material rates', 'Applying Lancaster plant pricing benchmarks'],
+  ['Sourcing material rates', 'Applying Apex raw-material pricing benchmarks'],
   ['Calculating fabrication', 'Assigning shop hourly factors and weld complexity'],
-  ['Computing logistics', 'Routing truckloads from Lancaster plant to delivery'],
+  ['Computing logistics', 'Routing truckloads from processing facility to delivery'],
   ['Finalising quote', 'Generating detailed line-item breakdown'],
 ];
 

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   LANCASTER STEEL — engine.js  (patched)
+   APEX INDUSTRIAL — engine.js
    Router:
      CSV    → LocalEngine.calcFromCsv()   (no API)
      Preset → LocalEngine.calcFromPreset() (no API)
@@ -8,12 +8,12 @@
 
 'use strict';
 
-// ── Lancaster calibration context (image mode only) ────
+// ── Apex calibration context (image mode only) ────
 const CALIBRATION_CONTEXT = `
-You are a rebar cost estimator for a steel plant in Lancaster County, PA. Use US units (lbs, short tons, sq ft, USD) and ASTM A615 Grade 60 carbon steel by default.
+You are a steel cost estimator for Apex Industrial Steel & Coil Corp. Use US units (lbs, short tons, sq ft, USD) and catalog-certified ASTM grade carbon steel by default.
 
 QUANTITY
-Formula: Total lbs = sq ft x intensity x 1.06 (6% waste). Short tons = lbs / 2000.
+Formula: Total lbs = sq ft x intensity x 1.06 (6% margin reserve). Short tons = lbs / 2000.
 Intensities: slab-only 2-3 | 1-story home+footings 4-5 (default 4.5) | 2-story+staircase 5-6.5 | basement+2-story 6.5-8 | light commercial 8-11 lbs/sq ft.
 
 ELEMENT SPLIT (apply to adjusted total or extract from CSV if provided)
@@ -25,9 +25,9 @@ Stirrups/ties 7-8% | #3
 Headers 5-6% | #3-#4
 Staircase (if present) 4-5% | #4-#5
 
-PRICING — May 2026 Lancaster County delivered:
+PRICING — May 2026 Apex Industrial base pricing:
 budget $0.45/lb ($900/ton) | mid $0.53/lb ($1,050/ton) | premium $0.65/lb ($1,300/ton)
-Note: Nucor, CMC, Gerdau, Optimus raised prices $30/ton in May 2026. Flag if time-sensitive.
+Note: Mill indexing updated May 2026. Flag if time-sensitive.
 
 COST LINES (always keep separate)
 Material: lbs x price/lb
@@ -36,13 +36,13 @@ Install labor (optional): sq ft x $1.00-1.75
 
 ALWAYS DISCLOSE
 - Price source used and date
-- Grade: ASTM A615 Gr.60 assumed unless stated
+- Grade: ASTM catalog certified steel assumed unless stated
 - Which elements included/excluded
 - Fab and labor are contractor charges, not plant charges
 - Not a substitute for PE-stamped engineering takeoff
 - Note: Final costs may vary by ±$500.`;
 
-const SYSTEM_IMAGE = `You are the Lancaster County Steel Cost Estimator. Follow the CALIBRATION_CONTEXT exactly.
+const SYSTEM_IMAGE = `You are the Apex Industrial Steel Cost Estimator. Follow the CALIBRATION_CONTEXT exactly.
 CRITICAL: Return ONLY valid JSON in this exact format, no markdown, no extra text:
 {
   "summary": "Project estimate summary",
@@ -51,7 +51,7 @@ CRITICAL: Return ONLY valid JSON in this exact format, no markdown, no extra tex
   "module2": [{"item":"Element Name","basis":"Qty","rate":"$Rate","amount":number,"note":""}],
   "module3": [{"item":"Logistics","basis":"Mileage","rate":"$4.25","amount":number,"note":""}],
   "module4": [{"item":"Erection/Installation","basis":"Labor","rate":"$1.35/sqft","amount":number,"note":""}],
-  "module5": [{"item":"Contingency (6%)","basis":"Waste","rate":"6%","amount":number,"note":""}]
+  "module5": [{"item":"Margin","basis":"Direct margin","rate":"6%","amount":number,"note":""}]
 }`;
 
 // ── API endpoint (proxy → Gemini 2.0 Flash) ───────────
@@ -83,8 +83,7 @@ async function generateQuote() {
   const btn = document.getElementById('generateBtn');
   if (btn) btn.disabled = true;
 
-  const miles = parseFloat(document.getElementById('deliveryMiles').value) || 0;
-  const opts = { miles, erection: 'no', buildType: 'residential', notes: '' };
+  const opts = { erection: 'no', buildType: 'residential', notes: '' };
 
   try {
     let quote;
@@ -97,7 +96,7 @@ async function generateQuote() {
     } else if (mode === 'preset' && window.LState.presetItems.length) {
       quote = await LocalEngine.calcFromPreset(window.LState.presetItems, opts);
     } else if (mode === 'image') {
-      quote = await _generateImageQuote(miles, opts.buildType, opts.erection, opts.notes);
+      quote = await _generateImageQuote(0, opts.buildType, opts.erection, opts.notes);
     } else {
       throw new Error('Please paste requirements into the text box or upload a CSV file.');
     }

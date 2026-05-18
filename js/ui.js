@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════
-   LANCASTER STEEL — ui.js
+   APEX INDUSTRIAL — ui.js
    UI helpers: mode tabs, steps, file handling, previews
    ═══════════════════════════════════════════════════ */
 
@@ -142,7 +142,7 @@ function downloadPresetCatalogCsv() {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = 'lancaster-steel-available-items.csv';
+  link.download = 'apex-industrial-available-items.csv';
   document.body.appendChild(link);
   link.click();
   link.remove();
@@ -179,7 +179,7 @@ function printPresetCatalog() {
     <!doctype html>
     <html>
     <head>
-      <title>Lancaster Steel Available Items</title>
+      <title>Apex Industrial Available Items</title>
       <meta charset="utf-8" />
       <style>
         body { font-family: Arial, sans-serif; margin: 24px; color: #111827; }
@@ -193,7 +193,7 @@ function printPresetCatalog() {
       </style>
     </head>
     <body>
-      <h1>Lancaster Steel Available Items</h1>
+      <h1>Apex Industrial Available Items</h1>
       <p class="meta">Use this catalog as a reference for preset materials. Save or print this page to create a PDF.</p>
       <table>
         <thead>

@@ -1,152 +1,176 @@
-# Lancaster Steel Estimator
+# Manufacturing Quotation & RFQ Automation MVP Blueprint
 
-A comprehensive, web-based quotation and estimation engine designed for Lancaster Steel. This application allows users to generate professional steel fabrication and erection quotes through CSV uploads, AI-powered floor plan analysis, or a dynamic preset builder.
+An End-to-End Workflow Blueprint and Final MVP Specification designed for steel manufacturers, coil processing companies, sheet metal suppliers, pipe manufacturers, and industrial raw material businesses. This system transforms fragmented, spreadsheet-heavy manual workflows into a centralized, automated enterprise pipeline—reducing quotation turnaround times from hours or days down to 10–20 minutes.
 
-## Features & Modules
+---
 
-1. **Input Methods:**
-   - **CSV / BOM Upload:** Parses standard Bill of Materials (BOM) CSV files and uses a local, deterministic pricing engine to generate highly accurate quotes based on weight and material grade.
-   - **Floor Plan Analysis (AI):** Users can upload architectural drawings. The app sends the image via a local proxy to an AI model (Gemini 2.0 Flash / HuggingFace) constrained by strict calibration rules to estimate steel requirements based on square footage and structural typologies.
-   - **Quick Presets:** A dynamic autocomplete builder that allows users to search an internal database of 19+ structural steel materials, add quantities, and generate an itemised quote instantly.
+## 📋 Executive Summary
+Currently, industrial raw material and steel businesses rely heavily on disconnected tools like spreadsheets, emails, WhatsApp messages, and manual calculations to compile quotations. This manual process results in significant margin leakage, slow response speeds, pricing inconsistencies, and a lack of management visibility.
 
-2. **Cost Modules Output:**
-   - **Module 1:** Material & Fabrication (Variable costs based on steel type and weight)
-   - **Module 2:** Logistics & Freight (Calculated via delivery mileage and truckloads)
-   - **Module 3:** Erection & Field Work (Optional crane & labor costs)
-   - **Module 4:** Contingency & Tax Compliance (Standard 6% buffer)
+The **Quotation Automation MVP** serves as an **RFQ Understanding & Quotation Automation Platform** (not an ERP replacement) engineered to:
+* **Drastically Accelerate Turnaround:** Reduce processing times from 4–10 hours to 10–20 minutes.
+* **Standardize Pricing Logic:** Eliminate human calculation variances across employees and centralize costing templates.
+* **Protect Margins:** Avoid underquoting due to missed hidden costs, scrap percentages, or freight fluctuations.
+* **Enhance Enterprise Credibility:** Deliver professional, digitally signed, and layout-consistent customer-facing PDF quotations.
+* **Provide Management Visibility:** Introduce clear audit logs, real-time pipeline analytics, and rule-based approval workflows.
 
-3. **Backend Proxy (`proxy.js`):**
-   - Secures API keys and sensitive logic away from the client.
-   - Handles communication with the HuggingFace AI Router API.
-   - Manages EmailJS server-side dispatch logic for sending official quotes to clients.
+---
 
-## Parsing Workflow
+## 🛠️ Core Problems in Current Manual Workflows
 
-The deterministic quote engine lives in `js/engine-local.js`. It accepts freeform text, CSV rows, or preset selections and converts them into quote lines only when the item can be matched to a known steel/material alias.
+### 1. Operational Inefficiencies
+* **Multi-Channel Chaos:** Incoming RFQs arrive randomly through calls, emails, PDFs, Excel sheets, and WhatsApp.
+* **Manual Data Entry:** Sales executives spend excessive time manually copying and re-keying product specs into spreadsheets.
+* **Siloed Communications:** Multiple departments (Sales, Costing, Production, Finance) coordinate via ad-hoc phone calls and emails.
+* **No Version Control:** Multiple quotation iterations circulate loosely, causing overwriting or sharing of incorrect revisions.
 
-### 1. Freeform text parsing
+### 2. Financial Hazards
+* **Margin Leakage:** Hidden manufacturing overheads, yield drops, and slitting losses are frequently omitted.
+* **Inconsistent Discounting:** Lack of structured, tier-based policies or centralized tracking for volume-based pricing.
+* **Inaccurate Cost Estimations:** Relying on stale material procurement rates or outdated market-linked steel index values.
 
-The text parser is designed for pasted requirements such as:
+### 3. Management and Tracking Gaps
+* **Dark Pipeline:** No visibility into real-time quotation status, win/loss conversion ratios, or team performance.
+* **Loose Approvals:** Delayed deal closures because discount authorization involves waiting on physical signatures or back-and-forth email chains.
+* **Human Dependency:** Highly reliant on the specialized knowledge of experienced employees, inflating onboarding times for new hires.
 
-```text
-1400 lbs HSFG bolts
-steel decking 2200 lbs
-purlins - 1850 lbs
+---
+
+## 👥 Target Stakeholders & User Roles
+
+| Role | Core Workflow Responsibilities |
+| :--- | :--- |
+| **Sales Executive** | Captures incoming raw customer inquiries, configures product dimensions, validates parsed entries, and coordinates delivery. |
+| **Costing Engineer** | Validates the Bill of Materials (BOM), confirms manufacturing feasibility, verifies material cost rates, and ensures margin health. |
+| **Production Planning** | Checks real-time factory capacity, schedules processing lines, and confirms reliable delivery lead times. |
+| **Finance / Admin** | Handles tax verifications (GST/VAT checks), runs customer credit validation, and approves specialized payment terms. |
+| **Management / Directors**| Monitores corporate margins, evaluates high-level pipeline analytics, and signs off on high-value/low-margin quotations. |
+
+---
+
+## 🏗️ High-Level Functional Architecture
+
+```
+[ Messy Customer RFQ ]
+(Email, WhatsApp, PDF, Copy-Paste)
+         │
+         ▼
+┌──────────────────────────────┐
+│  STAGE 1: Inquiry Capture    │ ───► Copy-paste raw text into structured MVP interface
+└──────────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────┐
+│ STAGE 2: Parse & Validate    │ ───► Extract fields (Grade, Thickness, Slitting, Quantity)
+└──────────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────┐
+│  STAGE 3: Costing Engine     │ ───► Compute Raw Material, Labor, Machine, Scrap, Freight
+└──────────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────┐
+│ STAGE 4: Margin Validation   │ ───► Check tier rules and trigger approval workflows
+└──────────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────┐
+│ STAGE 5: Quote Generation    │ ───► Instantly output professional, branded PDF
+└──────────────────────────────┘
+         │
+         ▼
+[ Customer Delivery & Tracking ] ───► Share via secure link or email; monitor view status
 ```
 
-How it works:
-- The engine splits the pasted text into lines.
-- Each line is further split on common separators such as commas, semicolons, and tabs.
-- It extracts a quantity plus unit pair such as lbs, tons, kg, pieces, sq ft, or ft.
-- It then tries to identify the material name around that quantity.
-- The material is only quoted if the full phrase matches a known preset alias or a supported classifier alias.
+---
 
-Important matching rule:
-- Partial word hits are rejected.
-- A single word like anchor will not match anchor bolts.
-- A generic phrase like wire rope will not be forced into a different quoted item unless it exactly matches a supported alias.
+## ⚙️ Detailed MVP Stage Design
 
-If an item does not match the catalog, it is added to the unavailable list instead of being quoted.
+### Stage 1: Inquiry Capture & Parsing Engine
+* **The Philosophy:** The system shouldn't force users to manually fill out oversized forms. Instead, the user copies a messy message from WhatsApp or Email and pastes it directly into an RFQ text box.
+* **Parsing Example:**
+    * *Raw Input:* `"Need CR 1.2 x 1250 slit coil Qty 25 tons Delivery Hosur urgent"`
+    * *Structured Output Extraction:* * Material: `CR Coil`
+        * Thickness: `1.2 mm`
+        * Width: `1250 mm`
+        * Quantity: `25 Tons`
+        * Processing: `Slitting`
+        * Delivery: `Hosur`
+        * Priority: `Urgent`
 
-### 2. CSV parsing
+### Stage 2: Steel Product & Coil Configuration
+* **Dynamic Inputs:** Captured parameters automatically adapt based on the steel product category chosen (e.g., Coil Width, Thickness, Coil Weight, Coating Thickness, Slitting/Cut-to-length requirements, Yield & Tensile Strength).
+* **Feasibility Warnings:** Real-time software alerts trigger if an input configuration breaches engineering limitations (e.g., impossible slit widths, maximum coil weight constraints, or machine asset compatibility issues).
 
-CSV input is parsed by header name rather than fixed column order.
+### Stage 3: Automated Steel Costing Engine
+Replaces Excel calculation formulas with a robust, centralized calculation framework:
+$$	ext{Total Manufacturing Cost} = 	ext{Raw Material Cost} + 	ext{Labor Cost} + 	ext{Machine Processing Cost} + 	ext{Overheads} + 	ext{Logistics}$$
 
-Supported headers include:
-- item, description, material, name
-- qty, quantity, amount, count
-- unit, uom, units
-- grade, spec, standard
-- weight_lbs, weight_tons
-- unit_price
+* **Raw Material Costing:** Inputs variables like the baseline coil procurement rate, dimensional weight calculations, slitting loss, scrap percentage, and market-linked index pricing.
+* **Labor & Machine Costing:** Computes the runtime hours required, setup adjustments, power consumption tiers, operator grade scales, and machinery depreciation factors.
+* **Overheads & Logistics:** Auto-allocates fixed factory overheads, compliance check fees, quality control administration, and freight-per-ton transportation variables.
 
-CSV rows are processed in this order:
-1. Read the item name.
-2. Resolve weight from explicit weight columns if present.
-3. Otherwise convert qty + unit into pounds.
-4. Match the item against exact preset aliases.
-5. If no exact preset match exists, try the classifier aliases.
-6. If still unmatched, add the row to the unavailable list.
+### Stage 4: Rule-Based Approval Workflow
+To clear email blockages, the system implements automated margin evaluation thresholds:
+* **Margin > 20% to 25%:** Auto-Approved by system rules.
+* **Margin 10% to 25%:** Pushed to the **Sales Manager** for dashboard authorization.
+* **Margin < 10% or 15%:** Escalated straight to the **Director / Executive** tier.
 
-### 3. Preset matching rules
+### Stage 5: Branded Quotation Output
+* Generates highly polished PDF formats including custom company branding logos, structured pricing tables, detailed coil processing specs, clear payment terms, and QR-based authenticity indicators.
 
-Preset items are intentionally strict:
-- Exact alias matches are preferred.
-- The engine does not quote based on loose substring matches.
-- This prevents false positives like teddy bear, football, or sheet pile accidentally mapping to rebar, plate, or another steel item.
+---
 
-Examples:
-- HSFG bolts matches the HSFG bolt preset.
-- Tread plates matches the tread plate preset.
-- C-channels matches the channel preset when explicitly supported.
-- Sheet pile stays unavailable unless a sheet pile preset is added.
+## 💻 Technical Blueprint
 
-### 4. Unavailable items list
+### Recommended Tech Stack
+* **Frontend:** React, Next.js, Tailwind CSS (for agile, responsive, clean enterprise-grade interfaces).
+* **Backend:** Node.js, combined with NestJS or Express frameworks.
+* **Database:** PostgreSQL (handling core transactional data relationships).
+* **Storage:** AWS S3 (for secure storage of uploaded client files, CAD drawings, and finalized quotation documents).
+* **Authentication:** JSON Web Tokens (JWT) integrated with Role-Based Access Control (RBAC).
+* **PDF Compiler:** Puppeteer or PDFKit (for pixel-perfect template construction).
+* **Notifications:** SendGrid/Twilio APIs for dispatching Email, SMS, and WhatsApp transaction reminders.
 
-When at least one item is not recognized, the engine returns the normal quote object plus an `_meta.unavailable` array.
+### Core Database Entity Schema
+* `Customers`: Contains identifiers like `customer_id`, `company_name`, `industry`, and `tax_number`.
+* `Inquiries`: Connects to customers, maintaining `inquiry_id`, `status`, and `priority`.
+* `Product Configurations`: Houses calculated configuration details including `config_id`, `dimensions`, and `materials`.
+* `Costing`: Contains tracking fields like `costing_id`, `raw_material_cost`, `labor_cost`, and `overhead_cost`.
+* `Quotations`: Holds output fields like `quotation_id`, `version` markers, `total_value`, and `expiry_date`.
+* `Approvals`: Records `approval_id`, authorized `approver` names, workflow `status`, and action timestamps.
 
-That list is used by the UI to show the “Unavailable items — not quoted” modal.
+---
 
-If all items are unavailable, the engine still returns a quote shell with the missing items listed so the user can see what failed to match.
+## 🗺️ Implementation Roadmap
 
-### 5. Why this design
+```
+├─ Phase 1: Core MVP ──────────────────────────────► [6 - 8 Weeks]
+│  ├─ Copy-Paste Text Box Intake & Core RFQ Parsing Engine
+│  ├─ Manual Validation UI Workspace
+│  ├─ Automated Costing Rule Engine & Tiered Approval Flows
+│  └─ Base PDF Quotation Builder
+│
+├─ Phase 2: Smart Automation ──────────────────────► [4 - 6 Weeks]
+│  ├─ Native Email & WhatsApp Pipeline API Integrations
+│  ├─ OCR Scanner Engine for PDF Engineering Drawings
+│  └─ Real-Time Dynamic Pricing Feeds
+│
+└─ Phase 3: Advanced Enterprise Layer ─────────────► [Continuous Enterprise Expansion]
+   ├─ Two-Way ERP Sync (SAP, Oracle, Microsoft Dynamics)
+   ├─ Live Inventory Allocations & Production Planning Sync
+   └─ Predictive Margin & Upsell Optimization Analytics
+```
 
-This parser is meant to be conservative.
-- It avoids over-quoting unknown objects.
-- It keeps pricing deterministic and explainable.
-- It makes it obvious when a user needs to rename an item or add a new catalog alias.
+---
 
-## Architecture
+## 📈 Metric Evaluation Framework
 
-- **Frontend:** Vanilla HTML, CSS (Custom Apple-inspired Tokens), and JavaScript.
-  - `ui.js`: State management, DOM manipulation, drag-and-drop file handling, and UI interactions.
-  - `engine-local.js`: The pure deterministic pricing logic (offline-first). Contains the material database and rate cards.
-  - `engine.js`: The router that handles AI requests and triggers local calculations based on the selected mode.
-  - `quote.js`: Renders the final 5-module quote UI.
-  - `email.js`: Handles sending quote payload requests to the proxy for EmailJS dispatch.
-- **Backend:** Node.js Express server (`proxy.js`).
-
-## Instructions for Scaling & Maintenance
-
-As Lancaster Steel grows or market conditions change, the application will need to be updated. Here is how to scale and maintain the core logic:
-
-### 1. Updating Prices & Rates
-All fundamental pricing is stored locally in `js/engine-local.js`.
-- **Global Rates:** Update `PRICE_BANDS` (budget, mid, premium) to reflect current mill prices.
-- **Service Rates:** Update `FAB_RATE` (shop fabrication), `INSTALL_RATE` (erection), and `LOGISTICS_RATE` (freight).
-
-### 2. Expanding the Material Database (Presets)
-To add new materials to the Quick Presets autocomplete dropdown:
-1. Open `js/engine-local.js`.
-2. Locate the `PRESET_CONFIGS` object.
-3. Add a new numeric key with the material details:
-   ```javascript
-   20: { 
-     name: 'New Material Name', 
-     grade: 'ASTM Standard', 
-     priceLb: 0.85,  // Base price per lb
-     fabLb: 0.10,    // Fabrication cost per lb
-     note: 'Description for the quote line item' 
-   }
-   ```
-The autocomplete UI in the preset module will automatically pick up and suggest any new entries added here.
-
-### 3. Tuning the AI Estimator
-If the AI floor plan estimates begin deviating from reality, update the `CALIBRATION_CONTEXT` prompt located at the top of `js/engine.js`.
-- You can adjust the `lbs/sq ft` intensities, the element split percentages (e.g., Foundation vs. Columns), and specific pricing rules. This context acts as the strict "brain" for the AI model.
-
-### 4. Deploying to Production
-Currently, the proxy is run locally. For a live deployment:
-- **Frontend Hosting:** Host the static files (HTML, CSS, JS) on a CDN like Vercel, Netlify, or AWS S3.
-- **Backend Hosting:** Deploy `proxy.js` to a Node.js hosting environment (Render, Heroku, AWS EC2, or DigitalOcean).
-- **Environment Variables:** Ensure that `HF_TOKEN` (HuggingFace) and `EMAILJS_PRIVATE_KEY` are securely injected into the backend host's environment, **never** exposed in the public frontend repository.
-- **CORS Configuration:** Update the `cors()` settings in `proxy.js` to only allow requests from your verified frontend production domain.
-
-## Requirements to Run Locally
-1. Node.js installed.
-2. Run the proxy server: 
-   ```bash
-   $env:HF_TOKEN="your_hf_token"
-   node proxy.js
-   ```
-3. Open `index.html` in any modern web browser.
+| Metric Target | Before MVP | After MVP |
+| :--- | :--- | :--- |
+| **Quotation Turnaround Time** | 4 hours to 3 days | **10 to 20 minutes** |
+| **Data Architecture** | Fractured across files, notes, and messages | **Centralized Database Environment** |
+| **Process Methodology** | Manual entry and calculation reliance | **Automated Parsers and Logic Engines** |
+| **Pricing Reliability** | Frequent formula errors and margin loss | **Standardized, Financed-Approved Logic** |
+| **Management Controls** | Minimal visibility into win/loss pipelines | **Real-time KPI Dashboard and Digital Audits** |
