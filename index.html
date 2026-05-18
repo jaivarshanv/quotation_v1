@@ -44,28 +44,24 @@
 
     <!-- CARD: Delivery Details ───────────────────────── -->
     <div class="card animate-fadeUp" id="cardDelivery" style="animation-delay:.05s">
-      <div class="card-head">
-        <div class="card-title">
-          Step 1 — Project &amp; Delivery Details
-        </div>
-        <div class="card-subtitle">Complete the fields below then generate your full cost estimate</div>
-      </div>
       <div class="card-body">
-        <div class="form-grid">
-          <div class="form-group">
-            <label class="form-label">Client / Company</label>
-            <input class="form-control" type="text" id="clientName" placeholder="e.g. Smith Construction LLC" />
+        <form id="deliveryForm" onsubmit="generateQuote(); return false;">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Client / Company</label>
+              <input class="form-control" type="text" id="clientName" placeholder="e.g. Smith Construction LLC" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Distance (miles)</label>
+              <input class="form-control" type="number" id="deliveryMiles" placeholder="e.g. 75" min="0" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Client Email</label>
+              <input class="form-control" type="email" id="clientEmail" placeholder="e.g. client@example.com"
+                value="example@gmail.com" required />
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Distance (miles)</label>
-            <input class="form-control" type="number" id="deliveryMiles" placeholder="e.g. 75" min="0" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Client Email</label>
-            <input class="form-control" type="email" id="clientEmail" placeholder="e.g. client@example.com"
-              value="jaivarshanv@gmail.com" required />
-          </div>
-        </div>
+        </form>
       </div>
     </div>
 
@@ -73,7 +69,7 @@
     <div class="card animate-fadeUp" id="cardInput" style="animation-delay:.12s">
       <div class="card-head">
         <div class="card-title">
-          Step 2 — Paste requirements or upload a CSV
+          Paste text or upload a CSV(or xlsx)
         </div>
       </div>
       <div class="card-body">
@@ -152,10 +148,6 @@
               <table class="csv-table" id="csv-table"></table>
             </div>
           </div>
-          
-          <button class="btn btn-primary btn-block btn-lg" id="generateBtn" type="button" onclick="generateQuote()" style="margin-top:24px;">
-            Generate Full Quote
-          </button>
         </div>
 
       </div>
@@ -281,7 +273,7 @@
         <div class="qsec">
           <div class="qsec-head" onclick="toggleSec(this)">
             <div class="qsec-label">
-              Contingency &amp; Verification Fee
+              Margin
             </div>
             <div class="qsec-right">
               <span class="qsec-total" id="tot5">$0.00</span>
@@ -321,12 +313,6 @@
         <button class="btn btn-ghost btn-sm" id="emailBtn" onclick="sendEmail()">Send via Email</button>
         <button class="btn btn-primary btn-sm" onclick="resetTool()">New Quote</button>
       </div>
-
-      <p class="disclaimer">
-        * Disclaimer: Final cost estimates may vary based on local jobsite conditions and real-time market
-        fluctuations.
-      </p>
-
     </div>
     <!-- /quoteOutput -->
 

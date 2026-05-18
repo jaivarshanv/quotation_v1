@@ -112,11 +112,11 @@ function scoreItemAgainstCatalog(inputName) {
 // ══════════════════════════════════════════════════════
 async function resolveItem(inputName) {
   const { catalogEntry, score } = scoreItemAgainstCatalog(inputName);
-  
+
   if (catalogEntry && score >= SCORE_THRESHOLD) {
     return catalogEntry;
   }
-  
+
   console.warn(`[LocalEngine] No confident match for "${inputName}" (score: ${score.toFixed(2)}). Flagging as missing.`);
   return null;
 }
@@ -388,7 +388,7 @@ function _buildQuoteObject(module2, totalWeightLbs, miles, erection, buildType, 
   const subTotal = [module2, module3, module4].flat().reduce((a, r) => a + r.amount, 0);
   const contingencyAmt = subTotal > 0 ? Math.max(0.01, Math.round(subTotal * CONTINGENCY_PCT * 100) / 100) : 0;
   const module5 = [{
-    item: 'Contingency & Tax Compliance',
+    item: 'Margin',
     basis: `${(CONTINGENCY_PCT * 100).toFixed(0)}% of $${subTotal.toLocaleString()}`,
     rate: `${(CONTINGENCY_PCT * 100).toFixed(0)}%`,
     amount: contingencyAmt,
