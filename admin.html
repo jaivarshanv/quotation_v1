@@ -118,7 +118,6 @@
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Grade</th>
                 <th>Price/lb</th>
                 <th>Fab/lb</th>
                 <th>Margin %</th>
@@ -174,18 +173,14 @@
 
   <!-- Item form modal -->
   <div id="itemModalOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:900;" onclick="closeItemForm()"></div>
-  <div id="itemModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:16px; padding:28px; width:min(480px,92vw); z-index:1000; box-shadow:0 8px 40px rgba(0,0,0,.18); max-height:90vh; overflow-y:auto;">
+  <div id="itemModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:16px; padding:28px; width:min(500px,92vw); z-index:1000; box-shadow:0 8px 40px rgba(0,0,0,.18); max-height:90vh; overflow:hidden;">
     <div style="font-size:16px; font-weight:700; margin-bottom:18px;" id="itemModalTitle">Add Item</div>
     <input type="hidden" id="itemDocId" />
-    <div class="form-group">
+    <div class="form-group" style="margin-bottom:16px;">
       <label class="form-label">Name</label>
       <input class="form-control" type="text" id="itemName" placeholder="e.g. TMT Rebar Fe500D" />
     </div>
-    <div class="form-group">
-      <label class="form-label">Grade / Spec</label>
-      <input class="form-control" type="text" id="itemGrade" placeholder="e.g. ASTM A615 Gr.60" />
-    </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
       <div class="form-group">
         <label class="form-label">Price/lb ($)</label>
         <input class="form-control" type="number" step="0.001" id="itemPriceLb" placeholder="0.53" />
@@ -194,16 +189,12 @@
         <label class="form-label">Fab/lb ($)</label>
         <input class="form-control" type="number" step="0.001" id="itemFabLb" placeholder="0.12" />
       </div>
-      <div class="form-group">
-        <label class="form-label">Margin %</label>
-        <input class="form-control" type="number" step="1" id="itemMarginPct" placeholder="25" />
-      </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Note <small style="color:var(--ls-mid); font-weight:400;">(optional)</small></label>
-      <input class="form-control" type="text" id="itemNote" placeholder="e.g. Heavy gauge for footings/columns" />
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label">Margin %</label>
+      <input class="form-control" type="number" step="1" id="itemMarginPct" placeholder="25" />
     </div>
-    <div style="display:flex; gap:10px; margin-top:8px;">
+    <div style="display:flex; gap:10px; margin-top:24px;">
       <button class="btn btn-primary" onclick="saveItem()">Save Item</button>
       <button class="btn btn-ghost" onclick="closeItemForm()">Cancel</button>
     </div>

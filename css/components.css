@@ -422,6 +422,8 @@
 }
 
 .form-control {
+  width: 100%;
+  box-sizing: border-box;
   padding: 10px 14px;
   border: 1px solid var(--ls-divider);
   border-radius: var(--r-md);

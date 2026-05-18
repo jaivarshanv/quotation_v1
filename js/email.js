@@ -97,10 +97,7 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td valign="top">
-                  <div style="font-size:20px;font-weight:700;color:#0f172a;letter-spacing:-0.03em">
-                    Apex <span style="color:#64748b;font-weight:400">Industrial</span>
-                  </div>
-                  <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.4">
+                  <div style="font-size:11px;color:#64748b;line-height:1.4">
                     1280 Steel Way, Lancaster, PA 17601<br>
                     sales@apexindustrial.com | +1 (717) 555-0190
                   </div>

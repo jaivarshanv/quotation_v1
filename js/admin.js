@@ -183,13 +183,13 @@ window.sortBy = function(col) {
 const catalogTbody = document.getElementById("catalogTableBody");
 
 async function loadCatalogItems() {
-  catalogTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--ls-mid);">Loading catalog…</td></tr>`;
+  catalogTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--ls-mid);">Loading catalog…</td></tr>`;
   try {
     const snap = await getDocs(collection(db, "catalog"));
     catalogTbody.innerHTML = "";
 
     if (snap.empty) {
-      catalogTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--ls-mid); padding:20px;">No items in catalog. Add one above.</td></tr>`;
+      catalogTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ls-mid); padding:20px;">No items in catalog. Add one above.</td></tr>`;
       return;
     }
 
@@ -197,8 +197,7 @@ async function loadCatalogItems() {
       const d = docSnap.data();
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><strong>${d.name || "—"}</strong>${d.note ? `<br><small style="color:var(--ls-mid)">${d.note}</small>` : ""}</td>
-        <td><small>${d.grade || "—"}</small></td>
+        <td><strong>${d.name || "—"}</strong></td>
         <td>$${parseFloat(d.priceLb || 0).toFixed(3)}</td>
         <td>$${parseFloat(d.fabLb || 0).toFixed(3)}</td>
         <td>${d.marginPct !== undefined ? parseFloat(d.marginPct) + '%' : "—"}</td>
@@ -214,7 +213,7 @@ async function loadCatalogItems() {
     if (window.LocalEngine?.loadCatalog) window.LocalEngine.loadCatalog();
   } catch (error) {
     console.error("Error loading catalog:", error);
-    catalogTbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">Error: ${error.message}</td></tr>`;
+    catalogTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red; padding:20px;">Error: ${error.message}</td></tr>`;
   }
 }
 
@@ -222,11 +221,9 @@ window.openItemForm = async function(docId = null) {
   document.getElementById("itemDocId").value = docId || "";
   document.getElementById("itemModalTitle").textContent = docId ? "Edit Item" : "Add Item";
   document.getElementById("itemName").value = "";
-  document.getElementById("itemGrade").value = "";
   document.getElementById("itemPriceLb").value = "";
   document.getElementById("itemFabLb").value = "";
   document.getElementById("itemMarginPct").value = "";
-  document.getElementById("itemNote").value = "";
   document.getElementById("itemMsg").style.display = "none";
 
   if (docId) {
@@ -235,11 +232,9 @@ window.openItemForm = async function(docId = null) {
       if (snap.exists()) {
         const d = snap.data();
         document.getElementById("itemName").value    = d.name || "";
-        document.getElementById("itemGrade").value   = d.grade || "";
         document.getElementById("itemPriceLb").value = d.priceLb || "";
         document.getElementById("itemFabLb").value   = d.fabLb || "";
         document.getElementById("itemMarginPct").value = d.marginPct !== undefined ? d.marginPct : "";
-        document.getElementById("itemNote").value    = d.note || "";
       }
     } catch (e) { console.error(e); }
   }
@@ -256,11 +251,9 @@ window.closeItemForm = function() {
 window.saveItem = async function() {
   const docId   = document.getElementById("itemDocId").value.trim();
   const name    = document.getElementById("itemName").value.trim();
-  const grade   = document.getElementById("itemGrade").value.trim();
   const priceLb = parseFloat(document.getElementById("itemPriceLb").value);
   const fabLb   = parseFloat(document.getElementById("itemFabLb").value);
   const marginPctVal = document.getElementById("itemMarginPct").value.trim();
-  const note    = document.getElementById("itemNote").value.trim();
 
   if (!name)                        { showItemMsg("Name is required.", "error");        return; }
   if (isNaN(priceLb) || priceLb <= 0) { showItemMsg("Enter a valid Price/lb.", "error"); return; }
@@ -279,7 +272,7 @@ window.saveItem = async function() {
   const tokens = nameTag.split(/[^a-z0-9]+/).filter(Boolean);
   const tags = [...new Set([nameTag, ...tokens])];
 
-  const payload = { name, grade, tags, priceLb, fabLb, note, updatedAt: new Date().toISOString() };
+  const payload = { name, tags, priceLb, fabLb, updatedAt: new Date().toISOString() };
   if (marginPct !== undefined) {
     payload.marginPct = marginPct;
   }
