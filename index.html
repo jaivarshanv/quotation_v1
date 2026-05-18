@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lancaster Steel — Building Quote</title>
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+</head>
+
+<body>
+
+  <!-- ── TOP NAV ──────────────────────────────────────── -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo">Lancaster <span>Steel</span></div>
+      <div class="nav-badge">Building Quote Module</div>
+    </div>
+  </nav>
+
+
+  <!-- ── CATALOG EXPORT ────────────────────────────────
+  <div class="container" style="margin-top: -8px; margin-bottom: 18px;">
+    <div class="card animate-fadeUp" style="animation-delay:.03s">
+      <div class="card-body" style="display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+        <div>
+          <div class="card-title" style="margin-bottom:6px;">Available Items Catalog</div>
+          <div class="card-subtitle">Download to see available items.</div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn btn-secondary" type="button" onclick="downloadPresetCatalogCsv()">
+            Download CSV
+          </button>
+        </div>
+      </div>
+    </div>
+  </div> -->
+
+
+  <!-- ── MAIN CONTENT ──────────────────────────────────── -->
+  <div class="container" style="padding-bottom: 80px;">
+
+    <!-- CARD: Input Method ───────────────────────────── -->
+    <div class="card animate-fadeUp" id="cardInput" style="animation-delay:.05s">
+      <div class="card-head">
+        <div class="card-title">
+          Paste text or upload a CSV(or xlsx)
+        </div>
+      </div>
+      <div class="card-body">
+        <div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label">Paste requirements or RFQ</label>
+            <textarea id="pasteInput" class="form-control" style="min-height:200px; resize:vertical;"
+              placeholder="Follow this format: TMT 1200 lbs; Anchor bolts 1800 lbs"></textarea>
+            <button class="btn btn-primary btn-block" id="generateTextBtn" type="button"
+              style="margin-top:12px; display:none;" onclick="generateQuote()">
+              Generate Quote
+            </button>
+          </div>
+
+          <div
+            style="display:flex; align-items:center; gap:12px; margin:10px 0 14px; color:var(--ls-mid); font-size:12px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase;">
+            <div style="height:1px; flex:1; background:var(--ls-divider);"></div>
+            <div>OR</div>
+            <div style="height:1px; flex:1; background:var(--ls-divider);"></div>
+          </div>
+
+          <div class="alert alert-info">
+            <div class="alert__body">
+              <strong>CSV Format</strong>
+              Include columns for: <code>item</code>, <code>description</code>, <code>quantity</code>,
+              <code>unit</code>, <code>grade/spec</code> (optional), <code>length_ft</code> (optional). Any reasonable
+              CSV layout is accepted.
+              <div style="margin-top:12px;">
+                <a class="btn btn-secondary" href="csv-template.csv" download="lancaster-steel-csv-template.csv">
+                  Download CSV template
+                </a>
+              </div>
+              <div style="margin-top:16px; padding:12px; border:1px solid var(--ls-divider); border-radius:var(--r-sm); background:var(--ls-surface);
+                overflow-x:auto;">
+                <div style="font-weight:600; margin-bottom:10px;">Example inputs</div>
+                <table class="csv-table" style="margin:0; min-width:720px;">
+                  <thead>
+                    <tr>
+                      <th>item</th>
+                      <th>description</th>
+                      <th>quantity</th>
+                      <th>unit</th>
+                      <th>grade/spec</th>
+                      <th>length_ft</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Rebar</td>
+                      <td>Grade 60 reinforcing bar</td>
+                      <td>1200</td>
+                      <td>lbs</td>
+                      <td>A615</td>
+                      <td>blank</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="dropzone" id="drop-csv" style="margin-bottom:12px;">
+            <input type="file" id="file-csv" accept=".csv,.xlsx,.xls" onchange="handleFile(event,'csv')" />
+            <div class="drop-title">Or drop a CSV here (bill of materials)</div>
+          </div>
+
+          <div id="csv-preview-wrap" style="display:none; margin-top:16px">
+            <div class="file-pill">
+              <div class="file-pill-info">
+                <div class="file-pill-name" id="csv-file-name">—</div>
+                <div class="file-pill-meta" id="csv-file-meta">—</div>
+              </div>
+              <button class="file-pill-rm" onclick="clearFile('csv')">✕</button>
+            </div>
+            <div class="csv-preview-wrap">
+              <table class="csv-table" id="csv-table"></table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- end cardInput -->
+
+      <!-- CARD: Delivery Details ───────────────────────── -->
+      <div class="card animate-fadeUp" id="cardDelivery" style="animation-delay:.12s">
+        <div class="card-head">
+          <div class="card-title">
+            Step 3 — Project &amp; Delivery Details
+          </div>
+          <div class="card-subtitle">Complete the fields below then generate your full cost estimate</div>
+        </div>
+        <div class="card-body">
+          <form id="deliveryForm" onsubmit="generateQuote(); return false;">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Client / Company</label>
+                <input class="form-control" type="text" id="clientName" placeholder="e.g. Smith Construction LLC" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Distance (miles)</label>
+                <input class="form-control" type="number" id="deliveryMiles" placeholder="e.g. 75" min="0" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Client Email</label>
+                <input class="form-control" type="email" id="clientEmail" placeholder="e.g. client@example.com"
+                  required />
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-block btn-lg" id="generateBtn" type="submit">
+              Generate Full Quote
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- LOADER ─────────────────────────────────────────── -->
+      <div class="loader-overlay" id="loader">
+        <div class="loader-ring"></div>
+        <div class="loader-stage" id="loaderStage">Parsing input data</div>
+        <div class="loader-sub" id="loaderSub">Connecting to Lancaster pricing engine</div>
+      </div>
+
+      <!-- QUOTE OUTPUT ────────────────────────────────────── -->
+      <div id="quoteOutput">
+
+        <div class="quote-body">
+
+          <div class="qsec">
+            <div class="qsec-head" onclick="toggleSec(this)">
+              <div class="qsec-label">
+                Design &amp; Detailing
+              </div>
+              <div class="qsec-right">
+                <span class="qsec-total" id="tot1">$0.00</span>
+                <span class="qsec-chevron">▶</span>
+              </div>
+            </div>
+            <div class="qsec-body">
+              <table class="line-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Basis</th>
+                    <th>Rate</th>
+                    <th>Amount (USD)</th>
+                  </tr>
+                </thead>
+                <tbody id="rows1"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Module 2 -->
+          <div class="qsec">
+            <div class="qsec-head" onclick="toggleSec(this)">
+              <div class="qsec-label">
+                Material &amp; Fabrication
+              </div>
+              <div class="qsec-right">
+                <span class="qsec-total" id="tot2">$0.00</span>
+                <span class="qsec-chevron">▶</span>
+              </div>
+            </div>
+            <div class="qsec-body">
+              <table class="line-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Qty / Weight</th>
+                    <th>Rate</th>
+                    <th>Amount (USD)</th>
+                  </tr>
+                </thead>
+                <tbody id="rows2"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Module 3 -->
+          <div class="qsec">
+            <div class="qsec-head" onclick="toggleSec(this)">
+              <div class="qsec-label">
+                Transport &amp; Delivery
+              </div>
+              <div class="qsec-right">
+                <span class="qsec-total" id="tot3">$0.00</span>
+                <span class="qsec-chevron">▶</span>
+              </div>
+            </div>
+            <div class="qsec-body">
+              <table class="line-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Basis</th>
+                    <th>Rate</th>
+                    <th>Amount (USD)</th>
+                  </tr>
+                </thead>
+                <tbody id="rows3"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Module 4 -->
+          <div class="qsec" id="sectionErect">
+            <div class="qsec-head" onclick="toggleSec(this)">
+              <div class="qsec-label">
+                Erection &amp; Field Work
+              </div>
+              <div class="qsec-right">
+                <span class="qsec-total" id="tot4">$0.00</span>
+                <span class="qsec-chevron">▶</span>
+              </div>
+            </div>
+            <div class="qsec-body">
+              <table class="line-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Basis</th>
+                    <th>Rate</th>
+                    <th>Amount (USD)</th>
+                  </tr>
+                </thead>
+                <tbody id="rows4"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Module 5 -->
+          <div class="qsec">
+            <div class="qsec-head" onclick="toggleSec(this)">
+              <div class="qsec-label">
+                Contingency &amp; Verification Fee
+              </div>
+              <div class="qsec-right">
+                <span class="qsec-total" id="tot5">$0.00</span>
+                <span class="qsec-chevron">▶</span>
+              </div>
+            </div>
+            <div class="qsec-body">
+              <table class="line-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Basis</th>
+                    <th>Rate</th>
+                    <th>Amount (USD)</th>
+                  </tr>
+                </thead>
+                <tbody id="rows5"></tbody>
+              </table>
+            </div>
+          </div>
+
+        </div><!-- /quote-body -->
+
+        <div class="grand-total">
+          <div>
+            <div class="gt-label">Total Estimated Project Cost</div>
+            <div class="gt-range" id="gtRange"></div>
+          </div>
+          <div style="text-align:right">
+            <div class="gt-amount" id="gtAmount">$0.00</div>
+            <div class="gt-inr" id="gtInr" style="display:none"></div>
+          </div>
+        </div>
+
+        <div class="print-row">
+          <button class="btn btn-secondary btn-sm" onclick="window.print()">Print Quote</button>
+          <button class="btn btn-ghost btn-sm" id="emailBtn" onclick="sendEmail()">Send via Email</button>
+          <button class="btn btn-primary btn-sm" onclick="resetTool()">New Quote</button>
+        </div>
+
+        <p class="disclaimer">
+          * Disclaimer: Final cost estimates may vary based on local jobsite conditions and real-time market
+          fluctuations.
+        </p>
+
+      </div>
+      <!-- /quoteOutput -->
+
+    </div>
+    <!-- /container -->
+
+    <!-- ── FOOTER ────────────────────────────────────────── -->
+    <footer class="site-footer">
+      <p>HighSteel · Building Fabrication Estimator · Lancaster County, PA</p>
+    </footer>
+
+    <!-- ── SCRIPTS (load order matters) ─────────────────── -->
+    <script src="js/ui.js"></script>
+    <script src="js/loader.js"></script>
+    <script src="js/quote.js"></script>
+    <script src="js/email.js"></script>
+    <script src="js/engine-local.js"></script>
+    <script src="js/engine.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/sync.js"></script>
+</body>
+
+</html>

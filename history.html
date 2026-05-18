@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Quotes — Lancaster Steel</title>
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <style>
+    /* ── Table rows tappable ──────────────────────────── */
+    #historyTableBody tr {
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    #historyTableBody tr:hover,
+    #historyTableBody tr:active {
+      background: var(--ls-bg, #f5f5f7);
+    }
+
+    .tap-hint {
+      font-size: 11px;
+      color: var(--ls-mid, #6e6e73);
+      text-align: right;
+      padding: 8px 20px 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+
+    /* ── Modal overlay ────────────────────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      z-index: 900;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ── Slide-up drawer ──────────────────────────────── */
+    .modal-drawer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-height: 92dvh;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      z-index: 1000;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.32, .72, 0, 1);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-drawer.open {
+      transform: translateY(0);
+    }
+
+    /* handle bar */
+    .drawer-handle {
+      width: 36px;
+      height: 4px;
+      background: #d1d1d6;
+      border-radius: 2px;
+      margin: 12px auto 0;
+    }
+
+    /* ── Drawer header ────────────────────────────────── */
+    .drawer-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--ls-divider, #e5e5ea);
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 10;
+    }
+
+    .drawer-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ls-ink, #1d1d1f);
+      line-height: 1.3;
+    }
+
+    .drawer-subtitle {
+      font-size: 12px;
+      color: var(--ls-mid, #6e6e73);
+      margin-top: 2px;
+    }
+
+    .drawer-close {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      background: #f0f0f5;
+      color: #555;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-left: 12px;
+    }
+
+    /* ── Drawer body ──────────────────────────────────── */
+    .drawer-body {
+      padding: 16px 20px 32px;
+    }
+
+    /* ── Meta grid ────────────────────────────────────── */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 400px) {
+      .meta-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .meta-cell {
+      background: var(--ls-bg, #f5f5f7);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+
+    .meta-cell__label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      font-weight: 600;
+      color: var(--ls-mid, #6e6e73);
+      margin-bottom: 2px;
+    }
+
+    .meta-cell__value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ls-ink, #1d1d1f);
+    }
+
+    /* ── Module accordion ─────────────────────────────── */
+    .mod-block {
+      border: 1px solid var(--ls-divider, #e5e5ea);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+
+    .mod-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 16px;
+      cursor: pointer;
+      background: #fafafa;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mod-head:active {
+      background: #f0f0f5;
+    }
+
+    .mod-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ls-ink, #1d1d1f);
+    }
+
+    .mod-label small {
+      font-weight: 400;
+      color: var(--ls-mid, #6e6e73);
+      margin-left: 6px;
+    }
+
+    .mod-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mod-total {
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--font-mono, monospace);
+      color: #0071e3;
+    }
+
+    .mod-chev {
+      font-size: 11px;
+      color: var(--ls-mid, #6e6e73);
+      transition: transform .2s;
+    }
+
+    .mod-chev.open {
+      transform: rotate(90deg);
+    }
+
+    .mod-body {
+      display: none;
+      padding: 0 16px 12px;
+      border-top: 1px solid var(--ls-divider, #e5e5ea);
+    }
+
+    .mod-body.open {
+      display: block;
+    }
+
+    /* ── Line item rows ───────────────────────────────── */
+    .line-row {
+      padding: 10px 0;
+      border-bottom: 1px solid var(--ls-divider, #e5e5ea);
+    }
+
+    .line-row:last-child {
+      border-bottom: none;
+    }
+
+    .line-row__top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .line-row__name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--ls-ink, #1d1d1f);
+      flex: 1;
+    }
+
+    .line-row__amount {
+      font-size: 13px;
+      font-weight: 700;
+      font-family: var(--font-mono, monospace);
+      white-space: nowrap;
+    }
+
+    .line-row__meta {
+      font-size: 11px;
+      color: var(--ls-mid, #6e6e73);
+      margin-top: 2px;
+    }
+
+    .line-row__note {
+      font-size: 11px;
+      color: #0071e3;
+      margin-top: 3px;
+      font-style: italic;
+    }
+
+    /* ── Grand total bar ──────────────────────────────── */
+    .grand-bar {
+      background: #1d1d1f;
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+    }
+
+    .grand-bar__label {
+      font-size: 13px;
+      color: rgba(255, 255, 255, .6);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .grand-bar__amount {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      font-family: var(--font-mono, monospace);
+      letter-spacing: -.02em;
+    }
+
+    /* ── Disclaimer ───────────────────────────────────── */
+    .drawer-disclaimer {
+      font-size: 11px;
+      color: var(--ls-mid, #6e6e73);
+      margin-top: 14px;
+      line-height: 1.6;
+      padding: 10px 14px;
+      background: var(--ls-bg, #f5f5f7);
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── TOP NAV ────────────────────────────────────── -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo">Lancaster <span>Steel</span></div>
+      <div class="nav-badge">My Quotations</div>
+    </div>
+  </nav>
+
+  <!-- ── MAIN CONTENT ──────────────────────────────── -->
+  <div class="container animate-fadeUp" style="padding-top:40px; padding-bottom:80px;">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">Saved Quotations</div>
+        <div class="card-subtitle">Your past estimate history — newest first</div>
+      </div>
+      <div class="tap-hint">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+          <polyline points="15 3 21 3 21 9" />
+          <line x1="10" y1="14" x2="21" y2="3" />
+        </svg>
+        Tap any row for full details
+      </div>
+      <div class="card-body" style="padding:0; overflow-x:auto;">
+        <table class="line-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Project Description</th>
+              <th>Total Weight</th>
+              <th>Grand Total</th>
+              <th>Method</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody">
+            <tr>
+              <td colspan="5" style="text-align:center; padding:20px; color:var(--ls-mid);">
+                Loading history…
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL OVERLAY ─────────────────────────────── -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeDrawer()"></div>
+
+  <!-- ── DETAIL DRAWER ─────────────────────────────── -->
+  <div class="modal-drawer" id="detailDrawer">
+    <div class="drawer-handle"></div>
+
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title" id="drawerTitle">Cost Estimate</div>
+        <div class="drawer-subtitle" id="drawerSubtitle">—</div>
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()" aria-label="Close">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- Meta info -->
+      <div class="meta-grid" id="drawerMeta"></div>
+
+      <!-- Module sections injected here -->
+      <div id="drawerModules"></div>
+
+      <!-- Grand total -->
+      <div class="grand-bar">
+        <div>
+          <div class="grand-bar__label">Total Estimated Cost</div>
+          <div style="font-size:11px; color:rgba(255,255,255,.4); margin-top:2px;">All modules included</div>
+        </div>
+        <div class="grand-bar__amount" id="drawerGrandTotal">$0.00</div>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="drawer-disclaimer" id="drawerDisclaimer"></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/db.js"></script>
+  <script type="module" src="js/history.js"></script>
+
+</body>
+
+</html>

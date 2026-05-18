@@ -1,0 +1,61 @@
+/* ═══════════════════════════════════════════════════
+   LANCASTER STEEL — Design Tokens
+   Apple-inspired: crisp white, SF typography, glass
+   ═══════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Core palette */
+  --ls-black:    #1d1d1f;
+  --ls-dark:     #2d2d2f;
+  --ls-charcoal: #3d3d3f;
+  --ls-mid:      #6e6e73;
+  --ls-soft:     #aeaeb2;
+  --ls-divider:  #d2d2d7;
+  --ls-bg:       #f5f5f7;
+  --ls-white:    #ffffff;
+
+  /* Brand accent — deep steel blue */
+  --ls-accent:   #0071e3;
+  --ls-accent-h: #0077ed;
+  --ls-accent-l: #e8f1fd;
+  --ls-gold:     #bf8f00;
+  --ls-gold-l:   #fdf5dc;
+  --ls-green:    #1d7a4f;
+  --ls-green-l:  #eaf6f0;
+  --ls-red:      #c00;
+  --ls-red-l:    #fff0f0;
+  --ls-amber:    #7a5c00;
+  --ls-amber-l:  #fdf8e6;
+
+  /* Typography */
+  --font-body:   'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:   'JetBrains Mono', 'SF Mono', monospace;
+
+  /* Radius */
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  18px;
+  --r-xl:  24px;
+  --r-pill:999px;
+
+  /* Shadows — Apple-style subtle layering */
+  --shadow-xs:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-sm:  0 2px 8px rgba(0,0,0,.07), 0 1px 3px rgba(0,0,0,.05);
+  --shadow-md:  0 4px 20px rgba(0,0,0,.09), 0 2px 8px rgba(0,0,0,.06);
+  --shadow-lg:  0 8px 40px rgba(0,0,0,.12), 0 4px 16px rgba(0,0,0,.08);
+  --shadow-xl:  0 20px 60px rgba(0,0,0,.15), 0 8px 24px rgba(0,0,0,.10);
+
+  /* Glass */
+  --glass-bg:   rgba(255, 255, 255, 0.45);
+  --glass-bg-hover: rgba(255, 255, 255, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-blur: blur(20px);
+  --glass-saturate: saturate(180%);
+
+  /* Transitions */
+  --t-fast:  150ms cubic-bezier(0.25,0.46,0.45,0.94);
+  --t-mid:   280ms cubic-bezier(0.25,0.46,0.45,0.94);
+  --t-slow:  480ms cubic-bezier(0.25,0.46,0.45,0.94);
+}
