@@ -103,17 +103,12 @@ async function generateQuote() {
 
     stopLoader();
     if (btn) btn.disabled = false;
-    // If there are unavailable items, show them in a modal
-    const unavailable = quote && quote._meta && quote._meta.unavailable;
-    if (Array.isArray(unavailable) && unavailable.length) {
-      showUnavailableItems(unavailable);
-    }
-    
-    if (!quote.module2 || quote.module2.length === 0) {
-      throw new Error('All requested items are missing from our active catalog. Cannot generate a $0 quote.');
-    }
-    
-    renderQuote(quote);
+
+    // Save parsed quote to state
+    LState.parsedQuote = quote;
+
+    // Render interactive Costing Review table
+    renderCostingReview(quote);
 
   } catch (err) {
     stopLoader();
@@ -123,6 +118,283 @@ async function generateQuote() {
   }
 }
 window.generateQuote = generateQuote;
+
+// ── Pop-up Modal helpers for Unlisted Items ────────────
+function openUnlistedModal() {
+  const modal = document.getElementById('unlistedModal');
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+function closeUnlistedModal() {
+  const modal = document.getElementById('unlistedModal');
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+function saveUnlistedItems() {
+  const unlistedTbody = document.getElementById('unlistedTableBody');
+  let checkedCount = 0;
+  if (unlistedTbody) {
+    const checkBoxes = unlistedTbody.querySelectorAll('.review-checkbox');
+    checkBoxes.forEach(cb => {
+      if (cb.checked) checkedCount++;
+    });
+  }
+  
+  const badge = document.getElementById('unlistedCountBadge');
+  if (badge) {
+    const totalCount = badge.getAttribute('data-total') || '0';
+    badge.textContent = `${checkedCount} / ${totalCount} selected`;
+  }
+  
+  closeUnlistedModal();
+}
+window.openUnlistedModal = openUnlistedModal;
+window.closeUnlistedModal = closeUnlistedModal;
+window.saveUnlistedItems = saveUnlistedItems;
+
+function renderCostingReview(quote) {
+  const tbody = document.getElementById('reviewTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  const unlistedTbody = document.getElementById('unlistedTableBody');
+  if (unlistedTbody) unlistedTbody.innerHTML = '';
+
+  const matched = (quote._meta && quote._meta.rawMaterials) || [];
+  const unavailable = (quote._meta && quote._meta.unavailable) || [];
+  
+  const esc = window.esc || (s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+
+  // Update Add Unlisted Items button count badge
+  const btnOpenUnlisted = document.getElementById('btnOpenUnlisted');
+  if (btnOpenUnlisted) {
+    if (unavailable.length === 0) {
+      btnOpenUnlisted.style.display = 'none';
+    } else {
+      btnOpenUnlisted.style.display = 'flex';
+      const badge = document.getElementById('unlistedCountBadge');
+      if (badge) {
+        badge.setAttribute('data-total', unavailable.length);
+        badge.textContent = `0 / ${unavailable.length} selected`;
+      }
+    }
+  }
+
+  if (matched.length === 0 && unavailable.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px; color:var(--ls-mid);">No items parsed. Please check your inputs.</td></tr>`;
+    return;
+  }
+
+  // Render Matched Catalog Items
+  matched.forEach((m, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align: center; vertical-align: middle;">
+        <input type="checkbox" checked class="review-checkbox" data-type="matched" data-index="${idx}" style="transform: scale(1.1); cursor: pointer;" />
+      </td>
+      <td>
+        <input type="text" class="review-input" value="${esc(m.itemName)}" data-field="itemName" data-type="matched" data-index="${idx}" />
+      </td>
+      <td>
+        <input type="number" step="any" class="review-input" value="${m.qty}" data-field="qty" data-type="matched" data-index="${idx}" />
+      </td>
+      <td>
+        <input type="text" class="review-input" value="${esc(m.unit || 'lbs')}" data-field="unit" data-type="matched" data-index="${idx}" />
+      </td>
+      <td>
+        <input type="number" step="any" class="review-input" value="${m.basePriceLb || 0}" data-field="basePriceLb" data-type="matched" data-index="${idx}" />
+      </td>
+      <td>
+        <input type="number" step="any" class="review-input" value="${m.fabLb || 0}" data-field="fabLb" data-type="matched" data-index="${idx}" />
+      </td>
+      <td>
+        <input type="number" step="any" class="review-input" value="${m.marginPct || 0}" data-field="marginPct" data-type="matched" data-index="${idx}" />
+      </td>
+      <td style="vertical-align: middle;">
+        <span class="chip" style="background:#dcfce7;color:#166534;font-size:11px;font-weight:600;padding:4px 8px;border-radius:4px;">Catalog Match</span>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Render Unavailable Items inside the Pop-up Modal (with unchecked checkboxes so user must opt-in and add rate/fab/margin)
+  if (unlistedTbody) {
+    unavailable.forEach((un, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align: center; vertical-align: middle;">
+          <input type="checkbox" class="review-checkbox" data-type="unavailable" data-index="${idx}" style="transform: scale(1.1); cursor: pointer;" />
+        </td>
+        <td>
+          <input type="text" class="review-input" value="${esc(un.name || '')}" data-field="name" data-type="unavailable" data-index="${idx}" />
+        </td>
+        <td>
+          <input type="number" step="any" class="review-input" value="${un.qty || 0}" data-field="qty" data-type="unavailable" data-index="${idx}" />
+        </td>
+        <td>
+          <input type="text" class="review-input" value="${esc(un.unit || 'lbs')}" data-field="unit" data-type="unavailable" data-index="${idx}" />
+        </td>
+        <td>
+          <input type="number" step="any" class="review-input" placeholder="e.g. 0.50" data-field="basePriceLb" data-type="unavailable" data-index="${idx}" />
+        </td>
+        <td>
+          <input type="number" step="any" class="review-input" placeholder="e.g. 0.10" data-field="fabLb" data-type="unavailable" data-index="${idx}" />
+        </td>
+        <td>
+          <input type="number" step="any" class="review-input" placeholder="e.g. 10" data-field="marginPct" data-type="unavailable" data-index="${idx}" />
+        </td>
+      `;
+      unlistedTbody.appendChild(tr);
+    });
+  }
+
+  // Toggle visible sections — Keep raw requirements text and client info visible for easy cross-reference
+  // hide('cardInput');
+  // hide('cardClientInfo');
+  
+  const out = document.getElementById('quoteOutput');
+  if (out) out.classList.remove('visible');
+
+  show('cardReview');
+  setStep(3);
+
+  document.getElementById('cardReview').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+window.renderCostingReview = renderCostingReview;
+
+function compileFinalQuotation() {
+  const quote = LState.parsedQuote;
+  if (!quote) return;
+
+  const matchedTbody = document.getElementById('reviewTableBody');
+  const unlistedTbody = document.getElementById('unlistedTableBody');
+  if (!matchedTbody) return;
+
+  const matchedRows = Array.from(matchedTbody.querySelectorAll('tr'));
+  const unlistedRows = unlistedTbody ? Array.from(unlistedTbody.querySelectorAll('tr')) : [];
+  const rows = [...matchedRows, ...unlistedRows];
+
+  const newRawMaterials = [];
+  let newTotalWeightLbs = 0;
+  const newUnavailableList = [];
+
+  rows.forEach(tr => {
+    const cb = tr.querySelector('.review-checkbox');
+    if (!cb) return;
+
+    const isChecked = cb.checked;
+    const type = cb.getAttribute('data-type');
+
+    if (type === 'matched') {
+      if (!isChecked) return; // Skips unchecked matched items
+
+      const itemName = tr.querySelector('[data-field="itemName"]').value.trim();
+      const qty = parseFloat(tr.querySelector('[data-field="qty"]').value) || 0;
+      const unit = tr.querySelector('[data-field="unit"]').value.trim();
+      const basePriceLb = parseFloat(tr.querySelector('[data-field="basePriceLb"]').value) || 0;
+      const fabLb = parseFloat(tr.querySelector('[data-field="fabLb"]').value) || 0;
+      const marginPct = parseFloat(tr.querySelector('[data-field="marginPct"]').value) || 0;
+
+      const weightLbs = window.LocalEngine.toWeightLbs(qty, unit, 0);
+      newTotalWeightLbs += weightLbs;
+
+      const loadedRate = (basePriceLb + fabLb) * (1 + marginPct / 100);
+      const lineTotal = weightLbs * loadedRate;
+
+      newRawMaterials.push({
+        itemName,
+        qty,
+        unit,
+        weightLbs,
+        basePriceLb,
+        fabLb,
+        marginPct,
+        loadedRate,
+        amount: Math.round(lineTotal)
+      });
+
+    } else if (type === 'unavailable') {
+      const nameVal = tr.querySelector('[data-field="name"]').value.trim();
+      const qtyVal = parseFloat(tr.querySelector('[data-field="qty"]').value) || 0;
+      const unitVal = tr.querySelector('[data-field="unit"]').value.trim();
+
+      if (!isChecked) {
+        newUnavailableList.push({ name: nameVal, qty: qtyVal, unit: unitVal });
+        return;
+      }
+
+      const basePriceLb = parseFloat(tr.querySelector('[data-field="basePriceLb"]').value);
+      const fabLb = parseFloat(tr.querySelector('[data-field="fabLb"]').value);
+      const marginPct = parseFloat(tr.querySelector('[data-field="marginPct"]').value);
+
+      if (isNaN(basePriceLb) || isNaN(fabLb) || isNaN(marginPct)) {
+        showAlert(`Please enter a valid Rate, Fab charge, and Margin % for custom item "${nameVal}".`, 'warn');
+        throw new Error('Missing custom item pricing specifications.');
+      }
+
+      const weightLbs = window.LocalEngine.toWeightLbs(qtyVal, unitVal, 0);
+      newTotalWeightLbs += weightLbs;
+
+      const loadedRate = (basePriceLb + fabLb) * (1 + marginPct / 100);
+      const lineTotal = weightLbs * loadedRate;
+
+      newRawMaterials.push({
+        itemName: nameVal + ' (Custom)',
+        qty: qtyVal,
+        unit: unitVal,
+        weightLbs,
+        basePriceLb,
+        fabLb,
+        marginPct,
+        loadedRate,
+        amount: Math.round(lineTotal),
+        isCustom: true
+      });
+    }
+  });
+
+  if (newRawMaterials.length === 0) {
+    showAlert('Please select or enable at least one item to generate a quote.', 'warn');
+    return;
+  }
+
+  const opts = { erection: 'no', buildType: 'residential' };
+  const originalErect = !!(quote.module4 && quote.module4.length > 0);
+  if (originalErect) opts.erection = 'yes';
+
+  // Build the fresh final quote object using the local engine builder
+  const finalQuote = window.LocalEngine._buildQuoteObject(
+    newRawMaterials,
+    newTotalWeightLbs,
+    opts.erection,
+    opts.buildType,
+    quote._meta?.source || 'text',
+    newUnavailableList
+  );
+
+  // Preserve quoteRef if already generated
+  if (quote.quoteRef) {
+    finalQuote.quoteRef = quote.quoteRef;
+  }
+
+  LState.lastQuote = finalQuote;
+
+  // Render the final simplified quote output!
+  renderQuote(finalQuote);
+}
+window.compileFinalQuotation = compileFinalQuotation;
+
+function resetReview() {
+  hide('cardReview');
+  const out = document.getElementById('quoteOutput');
+  if (out) out.classList.remove('visible');
+  show('cardInput');
+  show('cardClientInfo');
+  setStep(1);
+}
+window.resetReview = resetReview;
 
 // ══════════════════════════════════════════════════════
 //  IMAGE: call Gemini 2.0 Flash via proxy

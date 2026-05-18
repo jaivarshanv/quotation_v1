@@ -120,26 +120,6 @@ function openDrawer(q) {
       <div class="meta-cell__label">Input Method</div>
       <div class="meta-cell__value">${modeLabel}</div>
     </div>
-    ${(data.clientName || q.clientName) ? `
-    <div class="meta-cell">
-      <div class="meta-cell__label">Client Name</div>
-      <div class="meta-cell__value">${esc(data.clientName || q.clientName)}</div>
-    </div>` : ""}
-    ${(data.clientEmail || q.clientEmail) ? `
-    <div class="meta-cell">
-      <div class="meta-cell__label">Client Email</div>
-      <div class="meta-cell__value">${esc(data.clientEmail || q.clientEmail)}</div>
-    </div>` : ""}
-    ${(data.clientPhone || q.clientPhone) ? `
-    <div class="meta-cell">
-      <div class="meta-cell__label">Mobile Number</div>
-      <div class="meta-cell__value">${esc(data.clientPhone || q.clientPhone)}</div>
-    </div>` : ""}
-    ${(data.clientAddress || q.clientAddress) ? `
-    <div class="meta-cell" style="grid-column: span 2;">
-      <div class="meta-cell__label">Delivery Address</div>
-      <div class="meta-cell__value">${esc(data.clientAddress || q.clientAddress)}</div>
-    </div>` : ""}
   `;
 
   // ── Sections ───────────────────────────────────────
@@ -177,7 +157,13 @@ function openDrawer(q) {
               <div class="line-row__name">${esc(r.item || "")}</div>
               <div class="line-row__amount">${fmt(r.amount || 0)}</div>
             </div>
-            ${r.basis ? `<div class="line-row__meta">Basis: ${esc(r.basis)}${r.rate ? " · Rate: " + esc(r.rate) : ""}</div>` : ""}
+            ${(r.qty || r.rate) ? `
+              <div class="line-row__meta">
+                ${r.qty ? `Quantity: ${Number(r.qty).toLocaleString('en-US')} ${esc(r.unit || '')}` : ''}
+                ${(r.qty && r.rate) ? ' · ' : ''}
+                ${r.rate ? `Rate: ${esc(r.rate)}` : ''}
+              </div>
+            ` : ''}
           </div>`).join("")}
       </div>
     `;

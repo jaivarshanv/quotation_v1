@@ -30,9 +30,9 @@ function populateSection(tbodyId, totId, rows) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${r.item || ''}</strong></td>
-      <td>${r.basis || '—'}</td>
+      <td>${r.qty ? Number(r.qty).toLocaleString('en-US') + ' ' + (r.unit || '') : '—'}</td>
       <td style="font-family:var(--font-mono);font-size:12px">${r.rate || '—'}</td>
-      <td>${fmt(r.amount || 0)}</td>`;
+      <td style="text-align: right;">${fmt(r.amount || 0)}</td>`;
     tbody.appendChild(tr);
   });
   const totEl = document.getElementById(totId);

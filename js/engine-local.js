@@ -72,6 +72,64 @@ function tokenize(str) {
     .filter(Boolean);
 }
 
+function getSteelCategoryMatch(inputName) {
+  const norm = inputName.toLowerCase();
+  
+  // 1. Rebar / TMT -> TMT Reinforcing Bars (Rebar)
+  if (norm.includes('rebar') || norm.includes('tmt') || norm.includes('reinforcing')) {
+    return 'TMT Reinforcing Bars (Rebar)';
+  }
+  
+  // 2. Galvanized sheet/grating -> Hot-Dip Galvanized Sheets (HDGI)
+  if (norm.includes('galvanized') || norm.includes('galv') || norm.includes('hdgi')) {
+    if (norm.includes('grating') || norm.includes('sheet') || norm.includes('sheets') || norm.includes('coil') || norm.includes('plate')) {
+      return 'Hot-Dip Galvanized Sheets (HDGI)';
+    }
+  }
+  
+  // 3. Beams / Rails / track -> Wide Flange Beams (I-Beams / H-Beams)
+  if (norm.includes('beam') || norm.includes('beams') || norm.includes('i-beam') || norm.includes('h-beam') || norm.includes('rail') || norm.includes('rails') || norm.includes('track')) {
+    return 'Wide Flange Beams (I-Beams / H-Beams)';
+  }
+  
+  // 4. Plates / Girders -> Heavy Hot Rolled Plates
+  if (norm.includes('plate') || norm.includes('plates') || norm.includes('tread') || norm.includes('checker') || norm.includes('diamond') || norm.includes('girder')) {
+    return 'Heavy Hot Rolled Plates';
+  }
+  
+  // 5. Tubing / Pipe / Railing -> Hollow Structural Sections (HSS Tubing)
+  if (norm.includes('tubing') || norm.includes('tube') || norm.includes('hss') || norm.includes('hollow') || norm.includes('pipe') || norm.includes('pipes') || norm.includes('railing') || norm.includes('railings')) {
+    return 'Hollow Structural Sections (HSS Tubing)';
+  }
+  
+  // 6. Angles / L-shapes -> Structural Angles (L-Angles)
+  if (norm.includes('angle') || norm.includes('angles') || norm.includes('l-angle') || norm.includes('l-angles')) {
+    return 'Structural Angles (L-Angles)';
+  }
+  
+  // 7. Channels / Purlins / Girts -> Mild Steel Channels (C-Channels)
+  if (norm.includes('channel') || norm.includes('channels') || norm.includes('c-channel') || norm.includes('c-channels') || norm.includes('purlin') || norm.includes('purlins') || norm.includes('girt') || norm.includes('girts')) {
+    return 'Mild Steel Channels (C-Channels)';
+  }
+  
+  // 8. Rods / Wires / Bolts / Turnbuckles -> Steel Wire Rods
+  if (norm.includes('rod') || norm.includes('rods') || norm.includes('wire') || norm.includes('wires') || norm.includes('bolt') || norm.includes('bolts') || norm.includes('thread') || norm.includes('threaded') || norm.includes('turnbuckle') || norm.includes('turnbuckles')) {
+    return 'Steel Wire Rods';
+  }
+  
+  // 9. Cold Rolled -> Cold Rolled Coil (CRC)
+  if (norm.includes('cold') || norm.includes('crc') || (norm.includes('coil') && !norm.includes('hot'))) {
+    return 'Cold Rolled Coil (CRC)';
+  }
+  
+  // 10. Hot Rolled -> Hot Rolled Coil (HRC)
+  if (norm.includes('hot') || norm.includes('hrc') || (norm.includes('coil') && norm.includes('hot'))) {
+    return 'Hot Rolled Coil (HRC)';
+  }
+  
+  return null;
+}
+
 function scoreItemAgainstCatalog(inputName) {
   // Returns { catalogEntry, score }  where score is 0–1
   const inputTokens = tokenize(inputName);
@@ -83,6 +141,15 @@ function scoreItemAgainstCatalog(inputName) {
     return { catalogEntry: null, score: 0 };
   }
 
+  // 1. High-fidelity classification matching for standard B2B steel terms
+  const targetCategory = getSteelCategoryMatch(inputName);
+  if (targetCategory) {
+    const matchedEntry = CATALOG.find(entry => entry.name.toLowerCase() === targetCategory.toLowerCase());
+    if (matchedEntry) {
+      return { catalogEntry: matchedEntry, score: 0.95 };
+    }
+  }
+
   let best = { catalogEntry: null, score: 0 };
 
   for (const entry of CATALOG) {
@@ -91,6 +158,22 @@ function scoreItemAgainstCatalog(inputName) {
 
     const inputSet = new Set(inputTokens);
     const catalogSet = new Set(catalogTokens);
+
+    // Complete keyword subset match (e.g., matching "TMT" to "TMT Reinforcing Bars (Rebar)" or "I-Beams" to "Wide Flange Beams (I-Beams / H-Beams)")
+    let containsAll = true;
+    for (const t of inputTokens) {
+      const tMatch = catalogSet.has(t) || catalogTokens.some(ct => ct.length >= 3 && t.length >= 3 && (ct.includes(t) || t.includes(ct)));
+      if (!tMatch) {
+        containsAll = false;
+        break;
+      }
+    }
+
+    if (containsAll && inputTokens.length > 0) {
+      const score = 0.8 + 0.15 * (inputTokens.length / catalogTokens.length);
+      if (score > best.score) best = { catalogEntry: entry, score };
+      continue;
+    }
 
     let matches = 0;
     inputSet.forEach(t => { if (catalogSet.has(t)) matches++; });
@@ -227,7 +310,7 @@ async function calcFromText(text, opts = {}) {
 
       const catalogEntry = await resolveItem(entry.name);
       if (!catalogEntry) {
-        unavailable.push(entry.name || rawLine);
+        unavailable.push({ name: entry.name || rawLine, qty: entry.qty, unit: entry.unit });
         continue;
       }
 
@@ -306,7 +389,7 @@ async function calcFromCsv(csvText, opts = {}) {
     if (weightLbs <= 0) continue;
 
     const catalogEntry = await resolveItem(itemName);
-    if (!catalogEntry) { unavailable.push(itemName); continue; }
+    if (!catalogEntry) { unavailable.push({ name: itemName, qty: qty, unit: unit }); continue; }
 
     totalWeightLbs += weightLbs;
     const pricePerLb = catalogEntry.priceLb || PRICE_BANDS[DEFAULT_BAND];
@@ -379,26 +462,28 @@ function calcFromPreset(presetEntries, opts = {}) {
 function _buildQuoteObject(rawMaterials, totalWeightLbs, erection, buildType, sourceMode, unavailableList = []) {
   const tons = totalWeightLbs / 2000;
 
-  // Aggregate loaded materials into a single row for the client quotation table
-  const totalMaterialsAmount = rawMaterials.reduce((sum, item) => sum + item.amount, 0);
   const module2 = [];
-  if (totalMaterialsAmount > 0) {
+  rawMaterials.forEach(m => {
     module2.push({
-      item: 'Structural & Plate Steel Materials',
-      basis: 'Fully Loaded B2B Costing',
-      rate: '—',
-      amount: totalMaterialsAmount,
-      note: 'Includes base mill price, fabrication services, and project contingency margin.'
+      item: m.itemName,
+      qty: m.qty,
+      unit: m.unit,
+      rate: `$${m.loadedRate.toFixed(3)} / lb`,
+      rateVal: m.loadedRate,
+      amount: m.amount,
+      note: `Base: $${m.basePriceLb.toFixed(3)}/lb, Fab: $${m.fabLb.toFixed(3)}/lb, Margin: ${m.marginPct}%`
     });
-  }
+  });
 
   let module4 = [];
   if (erection === 'yes') {
     const cost = Math.round(tons * ERECT_PER_TON_MID);
     module4 = [{
       item: 'Erection & Crane Operations',
-      basis: `${tons.toFixed(2)} tons × $${ERECT_PER_TON_MID}/ton`,
-      rate: `$${ERECT_PER_TON_MID}/ton`,
+      qty: parseFloat(tons.toFixed(2)),
+      unit: 'tons',
+      rate: `$${ERECT_PER_TON_MID} / ton`,
+      rateVal: ERECT_PER_TON_MID,
       amount: cost,
       note: 'Field assembly, crane operations, and site management safety compliance'
     }];
@@ -462,6 +547,8 @@ window.LocalEngine = {
   calcFromPreset,
   calcFromText,
   loadCatalog,
+  _buildQuoteObject,
+  toWeightLbs,
 
   get CATALOG() { return CATALOG; },
   get PRICE_BANDS() { return PRICE_BANDS; },

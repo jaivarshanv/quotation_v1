@@ -857,7 +857,7 @@ select.form-control {
     box-shadow: none !important; 
     opacity: 1 !important;
   }
-  .nav, .page-hero, .steps-ribbon, #cardInput, #cardDelivery,
+  .nav, .page-hero, .steps-ribbon, #cardInput, #cardClientInfo, #cardDelivery, #cardReview, #unlistedModal,
   .loader-overlay, .print-row, .disclaimer, .alert, .site-footer { display: none !important; }
   body { background: white !important; }
   .container { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }

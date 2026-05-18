@@ -43,12 +43,13 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
     if (!moduleData || moduleData.length === 0) return '';
     return moduleData.map((row, index) => {
       const bg = index % 2 === 1 ? '#f8fafc' : '#ffffff';
+      const qtyStr = row.qty ? Number(row.qty).toLocaleString('en-US') + ' ' + (row.unit || '') : '—';
       return `
         <tr style="background-color:${bg}">
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#0f172a;font-size:13px;text-align:left">
             <strong>${row.item}</strong>
           </td>
-          <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:12px;text-align:left">${row.basis || '—'}</td>
+          <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:12px;text-align:left">${qtyStr}</td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#334155;font-size:12px;font-family:monospace;text-align:left">${row.rate || '—'}</td>
           <td style="padding:12px 16px;border-bottom:1px solid #e2e8f0;color:#0f172a;font-size:13px;font-weight:bold;font-family:monospace;text-align:right">$${row.amount.toLocaleString()}</td>
         </tr>`;
@@ -68,7 +69,19 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
           </table>
         </div>
         <div style="border-top:1px solid #f1f5f9;background-color:#ffffff">
-          <table width="100%" cellpadding="0" cellspacing="0" border="0">${rowsHtml}</table>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <thead>
+              <tr style="background-color:#f8fafc">
+                <th style="padding:8px 16px;color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;text-align:left">Item Description</th>
+                <th style="padding:8px 16px;color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;text-align:left;width:100px">Quantity</th>
+                <th style="padding:8px 16px;color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;text-align:left;width:120px">Rate</th>
+                <th style="padding:8px 16px;color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;text-align:right;width:120px">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
         </div>
       </div>
     `;
@@ -86,6 +99,10 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
                 <td valign="top">
                   <div style="font-size:20px;font-weight:700;color:#0f172a;letter-spacing:-0.03em">
                     Apex <span style="color:#64748b;font-weight:400">Industrial</span>
+                  </div>
+                  <div style="font-size:11px;color:#64748b;margin-top:4px;line-height:1.4">
+                    1280 Steel Way, Lancaster, PA 17601<br>
+                    sales@apexindustrial.com | +1 (717) 555-0190
                   </div>
                 </td>
                 <td align="right" valign="top">
@@ -131,37 +148,7 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
           </td>
         </tr>
 
-        <!-- B2B APPROVAL LOGS -->
-        <tr>
-          <td style="padding:20px 32px;background-color:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
-              <tr>
-                <td valign="middle">
-                  <div style="display:inline-block;vertical-align:middle;margin-right:12px">
-                    <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">Authorization Status</div>
-                  </div>
-                  <div style="display:inline-block;vertical-align:middle;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:${badgeColor};background-color:${badgeBg};border:1px solid ${badgeBorder}">
-                    ${approvals.status}
-                  </div>
-                </td>
-                <td align="right" valign="middle" style="color:#64748b;font-size:11px">
-                  <span style="display:inline-block;margin-left:14px">
-                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background-color:#15803d;margin-right:4px;vertical-align:middle"></span>
-                    Costing Eng.
-                  </span>
-                  <span style="display:inline-block;margin-left:14px">
-                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background-color:#15803d;margin-right:4px;vertical-align:middle"></span>
-                    Prod. Planner
-                  </span>
-                  <span style="display:inline-block;margin-left:14px">
-                    <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background-color:${finDotColor};margin-right:4px;vertical-align:middle"></span>
-                    Finance Admin
-                  </span>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
+
 
         <!-- GRAND TOTAL -->
         <tr>
