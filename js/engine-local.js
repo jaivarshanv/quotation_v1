@@ -72,62 +72,100 @@ function tokenize(str) {
     .filter(Boolean);
 }
 
-function getSteelCategoryMatch(inputName) {
-  const norm = inputName.toLowerCase();
+function stem(word) {
+  const w = word.toLowerCase();
+  if (w.endsWith('ies')) return w.slice(0, -3) + 'y';
+  if (w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1);
+  return w;
+}
+
+function isWordMatch(w_in, tag) {
+  if (w_in === tag) return true;
   
-  // 1. Rebar / TMT -> TMT Reinforcing Bars (Rebar)
-  if (norm.includes('rebar') || norm.includes('tmt') || norm.includes('reinforcing')) {
-    return 'TMT Reinforcing Bars (Rebar)';
-  }
+  // Explicitly prevent "plated" or "plating" matching "plate"
+  if (w_in === 'plated' && tag === 'plate') return false;
+  if (w_in === 'plating' && tag === 'plate') return false;
   
-  // 2. Galvanized sheet/grating -> Hot-Dip Galvanized Sheets (HDGI)
-  if (norm.includes('galvanized') || norm.includes('galv') || norm.includes('hdgi')) {
-    if (norm.includes('grating') || norm.includes('sheet') || norm.includes('sheets') || norm.includes('coil') || norm.includes('plate')) {
-      return 'Hot-Dip Galvanized Sheets (HDGI)';
+  if (w_in.length >= 3 && tag.length >= 3) {
+    if (w_in.includes(tag) || tag.includes(w_in)) {
+      return true;
     }
   }
-  
-  // 3. Beams / Rails / track -> Wide Flange Beams (I-Beams / H-Beams)
-  if (norm.includes('beam') || norm.includes('beams') || norm.includes('i-beam') || norm.includes('h-beam') || norm.includes('rail') || norm.includes('rails') || norm.includes('track')) {
-    return 'Wide Flange Beams (I-Beams / H-Beams)';
+  return false;
+}
+
+function getSteelCategoryMatch(inputName) {
+  const inputWords = tokenize(inputName).map(w => stem(w));
+  if (!inputWords.length) return null;
+
+  const STEEL_TAXONOMY = [
+    {
+      name: 'TMT Reinforcing Bars (Rebar)',
+      tags: ['rebar', 'tmt', 'reinforcing', 'bar', 'bars']
+    },
+    {
+      name: 'Hot-Dip Galvanized Sheets (HDGI)',
+      tags: ['galvanized', 'galv', 'hdgi', 'sheet', 'sheets', 'coil', 'plate', 'grating', 'grate', 'grates']
+    },
+    {
+      name: 'Wide Flange Beams (I-Beams / H-Beams)',
+      tags: ['beam', 'beams', 'i-beam', 'h-beam', 'rail', 'rails', 'track', 'crane']
+    },
+    {
+      name: 'Heavy Hot Rolled Plates',
+      tags: ['plate', 'plates', 'tread', 'checker', 'diamond', 'girder', 'girders', 'heavy', 'rolled', 'hot']
+    },
+    {
+      name: 'Hollow Structural Sections (HSS Tubing)',
+      tags: ['tubing', 'tube', 'tubes', 'hss', 'hollow', 'pipe', 'pipes', 'railing', 'railings', 'ss', 'stainless']
+    },
+    {
+      name: 'Structural Angles (L-Angles)',
+      tags: ['angle', 'angles', 'l-angle', 'l-angles']
+    },
+    {
+      name: 'Mild Steel Channels (C-Channels)',
+      tags: ['channel', 'channels', 'c-channel', 'c-channels', 'purlin', 'purlins', 'girt', 'girts']
+    },
+    {
+      name: 'Steel Wire Rods',
+      tags: ['rod', 'rods', 'wire', 'wires', 'bolt', 'bolts', 'thread', 'threaded', 'turnbuckle', 'turnbuckles', 'anchor']
+    },
+    {
+      name: 'Cold Rolled Coil (CRC)',
+      tags: ['cold', 'crc', 'coil', 'coils']
+    },
+    {
+      name: 'Hot Rolled Coil (HRC)',
+      tags: ['hot', 'hrc', 'coil', 'coils']
+    }
+  ];
+
+  let bestMatch = null;
+  let maxScore = 0;
+
+  for (const cat of STEEL_TAXONOMY) {
+    const stemmedTags = cat.tags.map(t => stem(t));
+    
+    // Count how many input words match tags in this category
+    let matches = 0;
+    for (const w_in of inputWords) {
+      const hasMatch = stemmedTags.some(tag => isWordMatch(w_in, tag));
+      if (hasMatch) {
+        matches++;
+      }
+    }
+
+    const score = matches / inputWords.length;
+    
+    // Strict 60% threshold for confidence
+    if (score >= 0.60 && score > maxScore) {
+      maxScore = score;
+      bestMatch = cat.name;
+    }
   }
-  
-  // 4. Plates / Girders -> Heavy Hot Rolled Plates
-  if (norm.includes('plate') || norm.includes('plates') || norm.includes('tread') || norm.includes('checker') || norm.includes('diamond') || norm.includes('girder')) {
-    return 'Heavy Hot Rolled Plates';
-  }
-  
-  // 5. Tubing / Pipe / Railing -> Hollow Structural Sections (HSS Tubing)
-  if (norm.includes('tubing') || norm.includes('tube') || norm.includes('hss') || norm.includes('hollow') || norm.includes('pipe') || norm.includes('pipes') || norm.includes('railing') || norm.includes('railings')) {
-    return 'Hollow Structural Sections (HSS Tubing)';
-  }
-  
-  // 6. Angles / L-shapes -> Structural Angles (L-Angles)
-  if (norm.includes('angle') || norm.includes('angles') || norm.includes('l-angle') || norm.includes('l-angles')) {
-    return 'Structural Angles (L-Angles)';
-  }
-  
-  // 7. Channels / Purlins / Girts -> Mild Steel Channels (C-Channels)
-  if (norm.includes('channel') || norm.includes('channels') || norm.includes('c-channel') || norm.includes('c-channels') || norm.includes('purlin') || norm.includes('purlins') || norm.includes('girt') || norm.includes('girts')) {
-    return 'Mild Steel Channels (C-Channels)';
-  }
-  
-  // 8. Rods / Wires / Bolts / Turnbuckles -> Steel Wire Rods
-  if (norm.includes('rod') || norm.includes('rods') || norm.includes('wire') || norm.includes('wires') || norm.includes('bolt') || norm.includes('bolts') || norm.includes('thread') || norm.includes('threaded') || norm.includes('turnbuckle') || norm.includes('turnbuckles')) {
-    return 'Steel Wire Rods';
-  }
-  
-  // 9. Cold Rolled -> Cold Rolled Coil (CRC)
-  if (norm.includes('cold') || norm.includes('crc') || (norm.includes('coil') && !norm.includes('hot'))) {
-    return 'Cold Rolled Coil (CRC)';
-  }
-  
-  // 10. Hot Rolled -> Hot Rolled Coil (HRC)
-  if (norm.includes('hot') || norm.includes('hrc') || (norm.includes('coil') && norm.includes('hot'))) {
-    return 'Hot Rolled Coil (HRC)';
-  }
-  
-  return null;
+
+  return bestMatch;
 }
 
 function scoreItemAgainstCatalog(inputName) {
