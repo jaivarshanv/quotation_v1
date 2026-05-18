@@ -143,8 +143,8 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
         <!-- SECTIONS -->
         <tr>
           <td style="padding:0;background-color:#ffffff">
-            ${renderSection('Section 1 — Materials & Processing', m2Tot, renderRows(data.module2))}
-            ${m4Tot > 0 ? renderSection('Section 2 — Erection & Field Work', m4Tot, renderRows(data.module4)) : ''}
+            ${renderSection('Material Cost', m2Tot, renderRows(data.module2))}
+            ${m4Tot > 0 ? renderSection('Erection & Field Work Cost', m4Tot, renderRows(data.module4)) : ''}
           </td>
         </tr>
 

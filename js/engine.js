@@ -340,6 +340,17 @@ function compileFinalQuotation() {
       const loadedRate = (basePriceLb + fabLb) * (1 + marginPct / 100);
       const lineTotal = weightLbs * loadedRate;
 
+      // Automatically seed new custom item into Firestore Catalog for future runs!
+      if (window.dbStore && window.dbStore.addCatalogItem) {
+        window.dbStore.addCatalogItem({
+          name: nameVal,
+          grade: 'ASTM Grade Steel',
+          priceLb: basePriceLb,
+          fabLb: fabLb,
+          marginPct: marginPct
+        });
+      }
+
       newRawMaterials.push({
         itemName: nameVal + ' (Custom)',
         qty: qtyVal,

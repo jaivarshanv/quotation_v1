@@ -567,7 +567,7 @@ function _buildQuoteObject(rawMaterials, totalWeightLbs, erection, buildType, so
       priceDate: 'May 2026',
       priceBand: `Standard ($${PRICE_BANDS.mid.toFixed(3)}/lb base)`,
       grade: 'ASTM Grade Steel - Catalog Certified',
-      disclaimer: 'Electronic RFQ pricing summary - official contract binding pending final review.',
+      disclaimer: '',
       unavailable: unavailableList || [],
       rawMaterials: rawMaterials, // FULL details saved for Admin inspector!
       approvals: {

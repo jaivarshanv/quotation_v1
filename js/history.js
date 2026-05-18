@@ -124,8 +124,8 @@ function openDrawer(q) {
 
   // ── Sections ───────────────────────────────────────
   const SECTION_TITLES = {
-    module2: "Section 1 — Materials & Processing",
-    module4: "Section 2 — Erection & Field Work"
+    module2: "Material Cost",
+    module4: "Erection & Field Work Cost"
   };
 
   const modulesEl = document.getElementById("drawerModules");
@@ -181,10 +181,7 @@ function openDrawer(q) {
   document.getElementById("drawerGrandTotal").textContent = fmt(grand);
 
   // ── Disclaimer ────────────────────────────────────
-  document.getElementById("drawerDisclaimer").textContent =
-    meta.disclaimer
-      ? meta.disclaimer
-      : "This estimate is based on Apex Industrial mill index rates. Final costs may vary by ±$500 based on market conditions and processing factors.";
+  document.getElementById("drawerDisclaimer").textContent = "";
 
   // ── Show ───────────────────────────────────────────
   document.getElementById("modalOverlay").classList.add("open");
