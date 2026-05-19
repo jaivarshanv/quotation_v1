@@ -134,18 +134,68 @@ function closeUnlistedModal() {
 }
 function saveUnlistedItems() {
   const unlistedTbody = document.getElementById('unlistedTableBody');
-  let checkedCount = 0;
-  if (unlistedTbody) {
-    const checkBoxes = unlistedTbody.querySelectorAll('.review-checkbox');
-    checkBoxes.forEach(cb => {
-      if (cb.checked) checkedCount++;
+  const reviewTbody = document.getElementById('reviewTableBody');
+  const esc = window.esc || (s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+  
+  if (unlistedTbody && reviewTbody) {
+    const rows = Array.from(unlistedTbody.querySelectorAll('tr'));
+    rows.forEach(tr => {
+      const cb = tr.querySelector('.review-checkbox');
+      if (cb && cb.checked) {
+        // Extract values entered by the user
+        const nameVal = tr.querySelector('[data-field="name"]').value.trim();
+        const qtyVal = parseFloat(tr.querySelector('[data-field="qty"]').value) || 0;
+        const unitVal = tr.querySelector('[data-field="unit"]').value.trim();
+        const basePriceLb = parseFloat(tr.querySelector('[data-field="basePriceLb"]').value) || 0;
+        const fabLb = parseFloat(tr.querySelector('[data-field="fabLb"]').value) || 0;
+        const marginPct = parseFloat(tr.querySelector('[data-field="marginPct"]').value) || 0;
+
+        // Push directly as an active item to reviewTableBody!
+        const newTr = document.createElement('tr');
+        newTr.setAttribute('data-is-custom-unlisted', 'true');
+        newTr.innerHTML = `
+          <td style="text-align: center; vertical-align: middle;">
+            <input type="checkbox" class="review-checkbox" data-type="matched" checked style="transform: scale(1.1); cursor: pointer;" />
+          </td>
+          <td title="${esc(nameVal)}">
+            <input type="text" class="review-input" value="${esc(nameVal)}" title="${esc(nameVal)}" data-field="itemName" data-type="matched" />
+          </td>
+          <td title="${qtyVal}">
+            <input type="number" step="any" class="review-input" value="${qtyVal}" title="${qtyVal}" data-field="qty" data-type="matched" />
+          </td>
+          <td title="${esc(unitVal)}">
+            <input type="text" class="review-input" value="${esc(unitVal)}" title="${esc(unitVal)}" data-field="unit" data-type="matched" />
+          </td>
+          <td title="${basePriceLb}">
+            <input type="number" step="any" class="review-input" value="${basePriceLb}" title="${basePriceLb}" data-field="basePriceLb" data-type="matched" />
+          </td>
+          <td title="${fabLb}">
+            <input type="number" step="any" class="review-input" value="${fabLb}" title="${fabLb}" data-field="fabLb" data-type="matched" />
+          </td>
+          <td title="${marginPct}%">
+            <input type="number" step="any" class="review-input" value="${marginPct}" title="${marginPct}%" data-field="marginPct" data-type="matched" />
+          </td>
+        `;
+        reviewTbody.appendChild(newTr);
+        
+        // Remove row from unavailable/unlisted list so it isn't listed twice
+        tr.remove();
+      }
     });
   }
 
-  const badge = document.getElementById('unlistedCountBadge');
-  if (badge) {
-    const totalCount = badge.getAttribute('data-total') || '0';
-    badge.textContent = `${checkedCount} / ${totalCount} selected`;
+  // Update badge display count based on what's left
+  if (unlistedTbody) {
+    const remainingRows = unlistedTbody.querySelectorAll('tr').length;
+    const badge = document.getElementById('unlistedCountBadge');
+    if (badge) {
+      badge.setAttribute('data-total', remainingRows);
+      badge.textContent = `0 / ${remainingRows} selected`;
+    }
+    const btnOpenUnlisted = document.getElementById('btnOpenUnlisted');
+    if (remainingRows === 0 && btnOpenUnlisted) {
+      btnOpenUnlisted.style.display = 'none';
+    }
   }
 
   closeUnlistedModal();
@@ -300,8 +350,23 @@ function compileFinalQuotation() {
       const loadedRate = (basePriceLb + fabLb) * (1 + marginPct / 100);
       const lineTotal = weightLbs * loadedRate;
 
+      const isCustom = tr.getAttribute('data-is-custom-unlisted') === 'true';
+
+      if (isCustom) {
+        // Automatically seed new custom item into Firestore Catalog for future runs!
+        if (window.dbStore && window.dbStore.addCatalogItem) {
+          window.dbStore.addCatalogItem({
+            name: itemName,
+            grade: 'ASTM Grade Steel',
+            priceLb: basePriceLb,
+            fabLb: fabLb,
+            marginPct: marginPct
+          });
+        }
+      }
+
       newRawMaterials.push({
-        itemName,
+        itemName: isCustom ? itemName + ' (Custom)' : itemName,
         qty,
         unit,
         weightLbs,
@@ -309,7 +374,8 @@ function compileFinalQuotation() {
         fabLb,
         marginPct,
         loadedRate,
-        amount: Math.round(lineTotal)
+        amount: Math.round(lineTotal),
+        isCustom: isCustom
       });
 
     } else if (type === 'unavailable') {

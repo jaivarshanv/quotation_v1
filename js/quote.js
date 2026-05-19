@@ -98,7 +98,7 @@ function renderQuote(data) {
 
   // Set Valid Until date
   const validDate = new Date();
-  validDate.setDate(validDate.getDate() + 30);
+  validDate.setDate(validDate.getDate() + 7);
   const validStr = validDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   document.getElementById('lblQuoteValid').textContent = validStr;
 
@@ -113,12 +113,12 @@ function renderQuote(data) {
   (data.module2 || []).forEach(r => {
     tMaterials += r.amount || 0;
     const tr = document.createElement('tr');
-    tr.style.borderBottom = '1px solid #e2e8f0';
+    tr.style.borderBottom = '1px solid #f1f5f9';
     tr.innerHTML = `
-      <td style="padding: 12px 20px; border: 1px solid #e2e8f0;" title="${r.item || ''}"><strong title="${r.item || ''}">${r.item || ''}</strong></td>
-      <td style="padding: 12px 20px; border: 1px solid #e2e8f0;">${r.qty ? Number(r.qty).toLocaleString('en-US') + ' ' + (r.unit || '') : '—'}</td>
-      <td style="padding: 12px 20px; border: 1px solid #e2e8f0; font-family: var(--font-mono);">${r.rate || '—'}</td>
-      <td style="padding: 12px 20px; border: 1px solid #e2e8f0; text-align: right; font-family: var(--font-mono); font-weight: 600;">${fmt(r.amount || 0)}</td>
+      <td style="padding: 12px 0; border: none; text-align: left;" title="${r.item || ''}"><span title="${r.item || ''}" style="color: #0f172a; font-weight: 500;">${r.item || ''}</span></td>
+      <td style="padding: 12px 0; border: none; text-align: left; color: #475569;">${r.qty ? Number(r.qty).toLocaleString('en-US') + ' ' + (r.unit || '') : '—'}</td>
+      <td style="padding: 12px 0; border: none; text-align: left; font-family: var(--font-mono); color: #475569;">${r.rate || '—'}</td>
+      <td style="padding: 12px 0; border: none; text-align: right; font-family: var(--font-mono); font-weight: 500; color: #0f172a;">${fmt(r.amount || 0)}</td>
     `;
     itemsBody.appendChild(tr);
   });
@@ -128,15 +128,40 @@ function renderQuote(data) {
     (data.module4 || []).forEach(r => {
       tErect += r.amount || 0;
       const tr = document.createElement('tr');
-      tr.style.borderBottom = '1px solid #e2e8f0';
+      tr.style.borderBottom = '1px solid #f1f5f9';
       tr.innerHTML = `
-        <td style="padding: 12px 20px; border: 1px solid #e2e8f0;" title="${r.item || ''}"><strong title="${r.item || ''}">${r.item || ''}</strong></td>
-        <td style="padding: 12px 20px; border: 1px solid #e2e8f0;">${r.qty ? Number(r.qty).toLocaleString('en-US') + ' ' + (r.unit || '') : '—'}</td>
-        <td style="padding: 12px 20px; border: 1px solid #e2e8f0; font-family: var(--font-mono);">${r.rate || '—'}</td>
-        <td style="padding: 12px 20px; border: 1px solid #e2e8f0; text-align: right; font-family: var(--font-mono); font-weight: 600;">${fmt(r.amount || 0)}</td>
+        <td style="padding: 12px 0; border: none; text-align: left;" title="${r.item || ''}"><span title="${r.item || ''}" style="color: #0f172a; font-weight: 500;">${r.item || ''}</span></td>
+        <td style="padding: 12px 0; border: none; text-align: left; color: #475569;">${r.qty ? Number(r.qty).toLocaleString('en-US') + ' ' + (r.unit || '') : '—'}</td>
+        <td style="padding: 12px 0; border: none; text-align: left; font-family: var(--font-mono); color: #475569;">${r.rate || '—'}</td>
+        <td style="padding: 12px 0; border: none; text-align: right; font-family: var(--font-mono); font-weight: 500; color: #0f172a;">${fmt(r.amount || 0)}</td>
       `;
       itemsBody.appendChild(tr);
     });
+  }
+
+  // Render Unavailable Items (faint font style, only in index.html web view, hidden via .unavailable-item-row CSS in print)
+  const unavailableList = data._meta?.unavailable || [];
+  unavailableList.forEach(un => {
+    const tr = document.createElement('tr');
+    tr.className = 'unavailable-item-row';
+    tr.style.borderBottom = '1px solid #f1f5f9';
+    tr.style.opacity = '0.55';
+    tr.innerHTML = `
+      <td style="padding: 12px 0; border: none; text-align: left;" title="${un.name || ''}">
+        <span style="color: #64748b; font-weight: 500; text-decoration: line-through;">${un.name || ''}</span>
+        <span style="font-size: 11px; color: #e11d48; margin-left: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">(Unavailable)</span>
+      </td>
+      <td style="padding: 12px 0; border: none; text-align: left; color: #64748b;">${un.qty ? Number(un.qty).toLocaleString('en-US') + ' ' + (un.unit || '') : '—'}</td>
+      <td style="padding: 12px 0; border: none; text-align: left; font-style: italic; color: #94a3b8;">Unavailable</td>
+      <td style="padding: 12px 0; border: none; text-align: right; font-family: var(--font-mono); color: #94a3b8;">—</td>
+    `;
+    itemsBody.appendChild(tr);
+  });
+
+  // Toggle dynamic PDF unavailable notice inside print-only terms
+  const printNotice = document.getElementById('printUnavailableNotice');
+  if (printNotice) {
+    printNotice.style.display = unavailableList.length > 0 ? 'inline' : 'none';
   }
 
   // Calculate tax and totals

@@ -25,11 +25,11 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
     return moduleData.map(row => {
       const qtyStr = row.qty ? Number(row.qty).toLocaleString('en-US') + ' ' + (row.unit || '') : '—';
       return `
-        <tr>
-          <td style="padding:10px 16px;border:1px solid #e2e8f0;color:#000000;font-size:13px;font-weight:bold;text-align:left">${row.item}</td>
-          <td style="padding:10px 16px;border:1px solid #e2e8f0;color:#334155;font-size:12px;text-align:left">${qtyStr}</td>
-          <td style="padding:10px 16px;border:1px solid #e2e8f0;color:#334155;font-size:12px;font-family:monospace;text-align:left">${row.rate || '—'}</td>
-          <td style="padding:10px 16px;border:1px solid #e2e8f0;color:#000000;font-size:13px;font-weight:bold;font-family:monospace;text-align:right">$${row.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+          <td style="padding:12px 0;border:none;color:#0f172a;font-size:13px;font-weight:500;text-align:left">${row.item}</td>
+          <td style="padding:12px 0;border:none;color:#475569;font-size:12px;text-align:left">${qtyStr}</td>
+          <td style="padding:12px 0;border:none;color:#475569;font-size:12px;font-family:monospace;text-align:left">${row.rate || '—'}</td>
+          <td style="padding:12px 0;border:none;color:#0f172a;font-size:13px;font-weight:500;font-family:monospace;text-align:right">$${row.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
         </tr>`;
     }).join('');
   };
@@ -42,17 +42,26 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
         
         <!-- HEADER -->
         <tr>
-          <td style="padding:32px;background-color:#ffffff;border-bottom:1px solid #e2e8f0">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+          <td style="padding:32px 32px 12px 32px;background-color:#ffffff">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom: 1px solid #cbd5e1; padding-bottom: 16px;">
               <tr>
-                <td valign="middle">
-                  <div style="font-size:24px;font-weight:800;color:#000000;letter-spacing:-1px;text-transform:uppercase;">Apex Industrial</div>
-                  <div style="font-size:10px;font-weight:600;color:#64748b;letter-spacing:0.5px;text-transform:uppercase;margin-top:2px;">Steel &amp; Coil Processing</div>
+                <td valign="bottom" align="left">
+                  <table cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="font-size:24px;font-weight:600;color:#000000;text-transform:uppercase;line-height:1;">Apex</td>
+                    </tr>
+                    <tr>
+                      <td style="font-size:24px;font-weight:600;color:#000000;text-transform:uppercase;line-height:1;padding-top:2px;">Industrial</td>
+                    </tr>
+                    <tr>
+                      <td style="font-size:9px;font-weight:500;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;padding-top:6px;">Steel &amp; Coil Processing</td>
+                    </tr>
+                  </table>
                 </td>
-                <td align="right" valign="middle" style="font-size:11px;color:#334155;line-height:1.4;">
-                  <strong>Apex Industrial &amp; Coil Processing Corp.</strong><br>
+                <td align="right" valign="bottom" style="font-size:12.5px;color:#475569;line-height:1.5;padding-top:4px;">
+                  <strong style="color:#0f172a;font-size:13.5px;font-weight:600;">Apex Industrial &amp; Coil Processing Corp.</strong><br>
                   1280 Steel Way, Lancaster, PA 17601<br>
-                  +1 (717) 555-0190 | sales@apexindustrial.com
+                  Phone: +1 (717) 555-0190 | sales@apexindustrial.com
                 </td>
               </tr>
             </table>
@@ -62,27 +71,30 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
         <!-- DETAILS BLOCK -->
         <tr>
           <td style="padding:24px 32px;background-color:#ffffff;">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e2e8f0;border-radius:4px;overflow:hidden;">
-              <!-- Black Top Accent Bar -->
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:13px;color:#475569;line-height:1.6;">
               <tr>
-                <td colspan="2" style="background-color:#000000;color:#ffffff;padding:8px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">
-                  Quotation Details
+                <!-- Column 1: Billed to -->
+                <td width="50%" valign="top">
+                  <div style="font-weight:600;color:#64748b;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;margin-bottom:8px;">Billed to</div>
+                  <div style="font-weight:600;color:#0f172a;font-size:14px;margin-bottom:4px;">${client}</div>
+                  <div style="margin-bottom:2px;">${address}</div>
+                  <div style="margin-bottom:2px;font-family:monospace;">${phone}</div>
+                  <div style="font-family:monospace;">${email}</div>
                 </td>
-              </tr>
-              <!-- Details Content -->
-              <tr style="background-color:#f8fafc;">
-                <!-- Left Column -->
-                <td width="50%" valign="top" style="padding:16px 20px;font-size:13px;color:#334155;line-height:1.6;">
-                  <strong style="color:#000000;">Quote Reference:</strong> <span style="font-family:monospace;font-weight:600;">${refNo}</span><br>
-                  <strong style="color:#000000;">Date:</strong> ${date}<br>
-                  <strong style="color:#000000;">Valid Until:</strong> ${validStr}
+                <!-- Column 2: Quote Number & Dates -->
+                <td width="25%" valign="top">
+                  <div style="font-weight:600;color:#64748b;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;margin-bottom:8px;">Quotation Number</div>
+                  <div style="font-family:monospace;font-weight:600;color:#0f172a;font-size:14px;white-space:nowrap;">${refNo}</div>
                 </td>
-                <!-- Right Column -->
-                <td width="50%" valign="top" style="padding:16px 20px;font-size:13px;color:#334155;line-height:1.6;">
-                  <strong style="color:#000000;">Customer Name:</strong> ${client}<br>
-                  <strong style="color:#000000;">Address:</strong> ${address}<br>
-                  <strong style="color:#000000;">Contact:</strong> ${phone}<br>
-                  <strong style="color:#000000;">Email:</strong> ${email}
+                <td width="25%" valign="top">
+                  <div style="margin-bottom:16px;">
+                    <div style="font-weight:600;color:#64748b;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;margin-bottom:4px;">Issue Date</div>
+                    <div style="font-weight:500;color:#0f172a;">${date}</div>
+                  </div>
+                  <div>
+                    <div style="font-weight:600;color:#64748b;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;margin-bottom:4px;">Valid Until</div>
+                    <div style="font-weight:500;color:#0f172a;">${validStr}</div>
+                  </div>
                 </td>
               </tr>
             </table>
@@ -92,13 +104,13 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
         <!-- ITEMS TABLE -->
         <tr>
           <td style="padding:0 32px 24px 32px;background-color:#ffffff">
-            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e2e8f0;border-radius:4px;overflow:hidden;border-collapse:collapse;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
               <thead>
-                <tr style="background-color:#000000;">
-                  <th style="padding:10px 16px;color:#ffffff;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;text-align:left;">Item Description</th>
-                  <th style="padding:10px 16px;color:#ffffff;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;text-align:left;width:100px;">Quantity</th>
-                  <th style="padding:10px 16px;color:#ffffff;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;text-align:left;width:120px;">Unit Price</th>
-                  <th style="padding:10px 16px;color:#ffffff;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;text-align:right;width:120px;">Amount</th>
+                <tr style="border-top:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;">
+                  <th style="padding:10px 0;color:#475569;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;text-align:left;">Item Description</th>
+                  <th style="padding:10px 0;color:#475569;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;text-align:left;width:100px;">Quantity</th>
+                  <th style="padding:10px 0;color:#475569;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;text-align:left;width:120px;">Unit Price</th>
+                  <th style="padding:10px 0;color:#475569;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;text-align:right;width:120px;">Subtotal</th>
                 </tr>
               </thead>
               <tbody>
@@ -111,18 +123,18 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
         <!-- SUMMARY BLOCK -->
         <tr>
           <td style="padding:0 32px 32px 32px;background-color:#ffffff;" align="right">
-            <table cellpadding="0" cellspacing="0" border="0" style="width:280px;border:1px solid #e2e8f0;border-radius:4px;overflow:hidden;border-collapse:collapse;">
-              <tr>
-                <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#334155;text-align:left;">Sub Total:</td>
-                <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:600;font-family:monospace;color:#000000;text-align:right;">$${subTotalVal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+            <table cellpadding="0" cellspacing="0" border="0" style="width:280px;border-collapse:collapse;">
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:8px 0;font-size:13px;color:#475569;text-align:left;font-weight:500;">Subtotal</td>
+                <td style="padding:8px 0;font-size:13px;font-weight:500;font-family:monospace;color:#475569;text-align:right;">$${subTotalVal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
               </tr>
-              <tr>
-                <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#334155;text-align:left;">Tax (6%):</td>
-                <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:600;font-family:monospace;color:#000000;text-align:right;">$${taxVal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:8px 0;font-size:13px;color:#475569;text-align:left;font-weight:500;">Tax (6%)</td>
+                <td style="padding:8px 0;font-size:13px;font-weight:500;font-family:monospace;color:#475569;text-align:right;">$${taxVal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
               </tr>
-              <tr style="background-color:#000000;color:#ffffff;">
-                <td style="padding:12px 16px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;text-align:left;">Grand Total:</td>
-                <td style="padding:12px 16px;font-size:13px;font-weight:700;font-family:monospace;text-align:right;">$${totalVal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+              <tr style="border-bottom:1.5px solid #cbd5e1;">
+                <td style="padding:10px 0;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;text-align:left;color:#000000;">Amount Due (USD)</td>
+                <td style="padding:10px 0;font-size:14px;font-weight:600;font-family:monospace;color:#000000;text-align:right;">$${totalVal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
               </tr>
             </table>
           </td>
@@ -130,12 +142,10 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
 
         <!-- FOOTER -->
         <tr>
-          <td style="padding:32px;background-color:#ffffff;border-top:1px solid #e2e8f0;text-align:center;">
-            <div style="font-size:12px;font-weight:600;color:#000000;letter-spacing:0.5px;margin-bottom:14px;">
-              Verified and digitally authorized by ApexIndustrial
-            </div>
-            <div style="font-size:24px;font-weight:800;color:#000000;letter-spacing:-0.5px;text-transform:uppercase;">
-              Thank You!
+          <td style="padding:32px;background-color:#ffffff;border-top:1px solid #cbd5e1;text-align:left;">
+            <!-- Terms & Notes -->
+            <div style="font-size:11px;color:#64748b;line-height:1.6;margin-bottom:0;text-align:justify;">
+              <strong style="color:#0f172a;font-weight:600;">Terms &amp; Notes:</strong> This quotation is valid for 7 days, with prices quoted FOB Shipping Point and exclusive of applicable sales tax and freight charges. Payment requires a 30% advance with the purchase order, and the remaining 70% is due prior to shipment. Final billing will be calculated based on the certified scale weight at the time of loading, subject to a standard +/- 10% weight tolerance, and a Mill Test Report (MTR) will be provided.
             </div>
           </td>
         </tr>

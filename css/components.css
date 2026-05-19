@@ -917,22 +917,27 @@ select.form-control {
   .print-only-flex {
     display: flex !important;
   }
+  .print-only-grid {
+    display: grid !important;
+  }
+  .unavailable-item-row {
+    display: none !important;
+  }
 
   /* Compact Print Spacings */
+  body {
+    margin: 2cm !important;
+  }
   #quoteOutput > div {
-    margin-bottom: 16px !important;
+    margin-bottom: 32px !important;
   }
   #quoteOutput table th,
   #quoteOutput table td {
-    padding: 6px 12px !important;
+    padding: 10px 0 !important;
     font-size: 12px !important;
   }
-  #quoteOutput .print-only > div {
-    padding: 10px 16px !important;
-    gap: 16px !important;
-  }
   #quoteOutput div.print-only:last-of-type {
-    margin-top: 16px !important;
+    margin-top: 32px !important;
     padding-top: 16px !important;
   }
 }

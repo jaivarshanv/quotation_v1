@@ -96,6 +96,11 @@ export async function addCatalogItem(itemData) {
 
     await addDoc(collection(db, "catalog"), payload);
     console.log("✓ Added custom item to Firestore catalog:", name);
+    
+    // Immediately reload catalog to make the new custom item available
+    if (window.LocalEngine && window.LocalEngine.loadCatalog) {
+      await window.LocalEngine.loadCatalog();
+    }
   } catch (e) {
     console.error("Error adding item to catalog:", e);
   }

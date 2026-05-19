@@ -296,60 +296,63 @@
     <div id="quoteOutput" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 40px; box-shadow: var(--shadow-md);">
 
       <!-- Header Grid -->
-      <div class="print-only print-only-flex" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px;">
-        <!-- Left Side: Large Brand Logo & Name -->
+      <div class="print-only print-only-flex" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 28px; padding-bottom: 16px; border-bottom: 1px solid #cbd5e1;">
+        <!-- Left Side: Brand Logo & Title -->
         <div style="display: flex; align-items: center; gap: 16px;">
           <img src="logo.jpg" alt="Apex Industrial" style="height: 56px; width: auto; object-fit: contain;" onerror="this.style.display='none'">
           <div>
-            <div style="font-size: 28px; font-weight: 800; color: #000000; letter-spacing: -1px; text-transform: uppercase; line-height: 1;">Apex Industrial</div>
-            <div style="font-size: 10px; font-weight: 600; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px;">Steel &amp; Coil Processing</div>
+            <div style="font-size: 24px; font-weight: 600; color: #000000; letter-spacing: -0.5px; text-transform: uppercase; line-height: 1;">Apex</div>
+            <div style="font-size: 24px; font-weight: 600; color: #000000; letter-spacing: -0.5px; text-transform: uppercase; line-height: 1; margin-top: 2px;">Industrial</div>
+            <div style="font-size: 9px; font-weight: 500; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 6px;">Steel &amp; Coil Processing</div>
           </div>
         </div>
-        
         <!-- Right Side: Company Details -->
-        <div style="text-align: right; font-size: 12px; color: #334155; line-height: 1.45;">
-          <strong>Apex Industrial &amp; Coil Processing Corp.</strong><br>
+        <div style="text-align: right; font-size: 12.5px; color: #475569; line-height: 1.5; margin-top: 4px;">
+          <strong style="color: #0f172a; font-size: 13.5px; font-weight: 600;">Apex Industrial &amp; Coil Processing Corp.</strong><br>
           1280 Steel Way, Lancaster, PA 17601<br>
           Phone: +1 (717) 555-0190 | sales@apexindustrial.com
         </div>
       </div>
 
-      <!-- Monochrome Info Block -->
-      <div class="print-only" style="margin-bottom: 32px;">
-        <!-- Top bar -->
-        <div style="background: #000000; color: #ffffff; padding: 10px 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-radius: 4px 4px 0 0;">
-          Quotation Details
+      <!-- Minimalist Customer & Quotation Info Grid -->
+      <div class="print-only print-only-grid" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 40px; margin-bottom: 32px; font-size: 13px; color: #475569; line-height: 1.6;">
+        <!-- Column 1: Billed to -->
+        <div>
+          <div style="font-weight: 600; color: #64748b; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; margin-bottom: 8px;">Billed to</div>
+          <div style="font-weight: 600; color: #0f172a; font-size: 14px; margin-bottom: 4px;" id="lblClientName">—</div>
+          <div id="lblClientAddress" style="margin-bottom: 2px;">—</div>
+          <div id="lblClientPhone" style="margin-bottom: 2px; font-family: var(--font-mono);">—</div>
+          <div id="lblClientEmail" style="font-family: var(--font-mono);">—</div>
         </div>
-        <!-- Body block -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-top: none; padding: 20px 24px; border-radius: 0 0 4px 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
-          <!-- Left side: Quote Details -->
-          <div style="font-size: 13px; color: #334155; line-height: 1.75;">
-            <div><strong style="color: #000000;">Quote Reference:</strong> <span id="lblQuoteRef" style="font-family: var(--font-mono); font-weight: 600; color: #000000;">REF-000000</span></div>
-            <div><strong style="color: #000000;">Date:</strong> <span id="lblQuoteDate">May 19, 2026</span></div>
-            <div><strong style="color: #000000;">Valid Until:</strong> <span id="lblQuoteValid">June 18, 2026</span></div>
+        <!-- Column 2: Quote Number -->
+        <div>
+          <div style="font-weight: 600; color: #64748b; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; margin-bottom: 8px;">Quotation Number</div>
+          <div id="lblQuoteRef" style="font-family: var(--font-mono); font-weight: 600; color: #0f172a; font-size: 14px; white-space: nowrap;">APEX-000000</div>
+        </div>
+        <!-- Column 3: Dates -->
+        <div>
+          <div style="margin-bottom: 16px;">
+            <div style="font-weight: 600; color: #64748b; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; margin-bottom: 4px;">Issue Date</div>
+            <div id="lblQuoteDate" style="font-weight: 500; color: #0f172a;">May 19, 2026</div>
           </div>
-          <!-- Right side: Customer Details -->
-          <div style="font-size: 13px; color: #334155; line-height: 1.75;">
-            <div><strong style="color: #000000;">Customer Name:</strong> <span id="lblClientName">—</span></div>
-            <div><strong style="color: #000000;">Address:</strong> <span id="lblClientAddress">—</span></div>
-            <div><strong style="color: #000000;">Contact:</strong> <span id="lblClientPhone">—</span></div>
-            <div><strong style="color: #000000;">Email:</strong> <span id="lblClientEmail">—</span></div>
+          <div>
+            <div style="font-weight: 600; color: #64748b; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; margin-bottom: 4px;">Valid Until</div>
+            <div id="lblQuoteValid" style="font-weight: 500; color: #0f172a;">June 18, 2026</div>
           </div>
         </div>
       </div>
 
-      <!-- Itemized Table block -->
-      <div style="border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 32px; background: #ffffff;">
+      <!-- Minimalist Itemized Table -->
+      <div style="margin-bottom: 32px; background: #ffffff;">
         <table class="line-table" style="width: 100%; border-collapse: collapse; margin: 0;">
           <thead>
-            <tr style="background: #000000;">
-              <th style="color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 20px; text-align: left; border: none; background: #000000 !important;">Item Description</th>
-              <th style="color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 20px; text-align: left; width: 120px; border: none; background: #000000 !important;">Quantity</th>
-              <th style="color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 20px; text-align: left; width: 120px; border: none; background: #000000 !important;">Unit Price</th>
-              <th style="color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 20px; text-align: right; width: 140px; border: none; background: #000000 !important;">Amount (USD)</th>
+            <tr style="border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; background: transparent !important;">
+              <th style="color: #475569; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 10px 0; text-align: left; background: transparent !important; border: none;">Item Description</th>
+              <th style="color: #475569; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 10px 0; text-align: left; width: 100px; background: transparent !important; border: none;">Quantity</th>
+              <th style="color: #475569; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 10px 0; text-align: left; width: 120px; background: transparent !important; border: none;">Unit Price</th>
+              <th style="color: #475569; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; padding: 10px 0; text-align: right; width: 140px; background: transparent !important; border: none;">Subtotal</th>
             </tr>
           </thead>
-          
           <!-- Unified tbody for both Materials & Erection items -->
           <tbody id="quoteItemsBody"></tbody>
         </table>
@@ -357,32 +360,30 @@
 
       <!-- Unified Summary block -->
       <div style="display: flex; justify-content: flex-end; margin-bottom: 32px;">
-        <table cellpadding="0" cellspacing="0" style="width: 320px; border: 1px solid #e2e8f0; border-radius: 4px; border-collapse: collapse; overflow: hidden; background: #ffffff;">
-          <!-- Materials row -->
+        <table cellpadding="0" cellspacing="0" style="width: 320px; border-collapse: collapse; background: #ffffff;">
+          <!-- Subtotal row -->
           <tr style="border-bottom: 1px solid #f1f5f9;">
-            <td style="padding: 12px 20px; font-size: 13px; color: #334155; text-align: left;">Sub Total:</td>
-            <td id="lblSummarySubtotal" style="padding: 12px 20px; font-size: 13px; font-family: var(--font-mono); font-weight: 600; color: #000000; text-align: right;">$0.00</td>
+            <td style="padding: 8px 0; font-size: 13px; color: #475569; text-align: left; font-weight: 500;">Subtotal</td>
+            <td id="lblSummarySubtotal" style="padding: 8px 0; font-size: 13px; font-family: var(--font-mono); font-weight: 500; color: #475569; text-align: right;">$0.00</td>
           </tr>
           <!-- Tax row -->
           <tr style="border-bottom: 1px solid #f1f5f9;">
-            <td style="padding: 12px 20px; font-size: 13px; color: #334155; text-align: left;">Tax (6%):</td>
-            <td id="lblSummaryTax" style="padding: 12px 20px; font-size: 13px; font-family: var(--font-mono); font-weight: 600; color: #000000; text-align: right;">$0.00</td>
+            <td style="padding: 8px 0; font-size: 13px; color: #475569; text-align: left; font-weight: 500;">Tax (6%)</td>
+            <td id="lblSummaryTax" style="padding: 8px 0; font-size: 13px; font-family: var(--font-mono); font-weight: 500; color: #475569; text-align: right;">$0.00</td>
           </tr>
           <!-- Grand Total row -->
-          <tr style="background: #000000; color: #ffffff;">
-            <td style="padding: 14px 20px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; background: #000000 !important; color: #ffffff !important;">Grand Total:</td>
-            <td id="lblSummaryTotal" style="padding: 14px 20px; font-size: 13px; font-family: var(--font-mono); font-weight: 700; text-align: right; background: #000000 !important; color: #ffffff !important;">$0.00</td>
+          <tr style="border-bottom: 1.5px solid #cbd5e1;">
+            <td style="padding: 10px 0; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; color: #000000;">Amount Due (USD)</td>
+            <td id="lblSummaryTotal" style="padding: 10px 0; font-size: 14px; font-family: var(--font-mono); font-weight: 600; text-align: right; color: #000000;">$0.00</td>
           </tr>
         </table>
       </div>
 
-      <!-- Verification Footer -->
-      <div class="print-only" style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 32px; margin-top: 32px;">
-        <div style="font-size: 12px; font-weight: 600; color: #000000; letter-spacing: 0.5px;">
-          Verified and digitally authorized by ApexIndustrial
-        </div>
-        <div style="font-size: 24px; font-weight: 800; color: #000000; margin-top: 16px; letter-spacing: -0.5px; text-transform: uppercase;">
-          Thank You!
+      <!-- Verification Footer & Terms -->
+      <div class="print-only" style="border-top: 1px solid #cbd5e1; padding-top: 16px; margin-top: 16px;">
+        <!-- Terms & Notes -->
+        <div style="font-size: 11px; color: #64748b; line-height: 1.6; margin-bottom: 0; text-align: justify;">
+          <strong style="color: #0f172a; font-weight: 600;">Terms &amp; Notes:</strong> This quotation is valid for 7 days, with prices quoted FOB Shipping Point and exclusive of applicable sales tax and freight charges. Payment requires a 30% advance with the purchase order, and the remaining 70% is due prior to shipment. Final billing will be calculated based on the certified scale weight at the time of loading, subject to a standard +/- 10% weight tolerance, and a Mill Test Report (MTR) will be provided.<span id="printUnavailableNotice" style="display: none; font-weight: 500; color: #e11d48;"> Note: Some requested items were declared unavailable when this quotation was generated.</span>
         </div>
       </div>
 

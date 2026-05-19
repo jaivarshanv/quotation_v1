@@ -66,6 +66,7 @@ window.selectPresetItem = selectPresetItem;
 
 function renderPresetTable() {
   const tbody = document.getElementById('presetTableBody');
+  if (!tbody) return;
   if (window.LState.presetItems.length === 0) {
     tbody.innerHTML = `<tr id="emptyPresetRow"><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">No items added yet. Search and add materials above.</td></tr>`;
     return;
@@ -371,9 +372,19 @@ function resetTool() {
   LState.lastQuote = null;
   LState.presetItems = [];
   renderPresetTable();
-  document.getElementById('presetSelectedId').value = '';
-  document.getElementById('presetSearch').value = '';
-  document.getElementById('presetQty').value = '';
+  
+  const elSelectedId = document.getElementById('presetSelectedId');
+  if (elSelectedId) elSelectedId.value = '';
+  
+  const elSearch = document.getElementById('presetSearch');
+  if (elSearch) elSearch.value = '';
+  
+  const elQty = document.getElementById('presetQty');
+  if (elQty) elQty.value = '';
+
+  const elPasteInput = document.getElementById('pasteInput');
+  if (elPasteInput) elPasteInput.value = '';
+
   clearFile('csv');
   clearFile('image');
   const out = document.getElementById('quoteOutput');
