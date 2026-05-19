@@ -453,3 +453,90 @@ window.closeInspector = function() {
   document.getElementById("inspectorOverlay").style.display = "none";
   document.getElementById("inspectorModal").style.display = "none";
 };
+
+window.migrateCatalog = async function() {
+  if (!confirm("Are you sure you want to completely clear the Firestore catalog and seed it with realistic parameters?")) {
+    return;
+  }
+  
+  const seedItems = [
+    { name: "Hot Rolled Coil (HRC)", unit: "lbs", weightPerUnit: 1.0, priceLb: 0.450, fabLb: 0.050, labourLb: 0.040, freightLb: 0.030, wastagePct: 2.0, marginPct: 6.0 },
+    { name: "TMT Reinforcing Bars (Rebar)", unit: "lbs", weightPerUnit: 1.0, priceLb: 0.550, fabLb: 0.120, labourLb: 0.060, freightLb: 0.040, wastagePct: 6.0, marginPct: 25.0 },
+    { name: "steel clamps", unit: "lbs", weightPerUnit: 1.0, priceLb: 10.000, fabLb: 10.000, labourLb: 1.500, freightLb: 0.350, wastagePct: 1.0, marginPct: 5.0 },
+    { name: "Steel Wire Rods", unit: "lbs", weightPerUnit: 1.0, priceLb: 0.500, fabLb: 0.050, labourLb: 0.050, freightLb: 0.030, wastagePct: 3.0, marginPct: 8.0 },
+    { name: "silver coils", unit: "meters", weightPerUnit: 1.0, priceLb: 4.000, fabLb: 0.500, labourLb: 0.250, freightLb: 0.100, wastagePct: 1.0, marginPct: 10.0 },
+    { name: "Structural Angles (L-Angles)", unit: "lbs", weightPerUnit: 1.0, priceLb: 0.620, fabLb: 0.120, labourLb: 0.070, freightLb: 0.050, wastagePct: 5.0, marginPct: 10.0 },
+    { name: "Hollow Structural Sections (HSS Tubing)", unit: "lbs", weightPerUnit: 1.0, priceLb: 0.700, fabLb: 0.180, labourLb: 0.100, freightLb: 0.060, wastagePct: 4.0, marginPct: 15.0 },
+    { name: "Hot-Dip Galvanized Sheets (HDGI)", unit: "lbs", weightPerUnit: 1.0, priceLb: 0.710, fabLb: 0.060, labourLb: 0.050, freightLb: 0.040, wastagePct: 3.0, marginPct: 12.0 },
+    { name: "Heavy Hot Rolled Plates", unit: "lbs", weightPerUnit: 1.0, priceLb: 0.580, fabLb: 0.100, labourLb: 0.080, freightLb: 0.030, wastagePct: 4.0, marginPct: 25.0 },
+    { name: "Cold Rolled Coil (CRC)", unit: "lbs", weightPerUnit: 1.0, priceLb: 0.620, fabLb: 0.080, labourLb: 0.050, freightLb: 0.030, wastagePct: 2.0, marginPct: 12.0 },
+    { name: "Wide Flange Beams (I-Beams / H-Beams)", unit: "lbs", weightPerUnit: 1.0, priceLb: 0.680, fabLb: 0.150, labourLb: 0.120, freightLb: 0.050, wastagePct: 5.0, marginPct: 15.0 },
+    { name: "HSFG V bolts", unit: "lbs", weightPerUnit: 1.0, priceLb: 8.000, fabLb: 4.000, labourLb: 0.500, freightLb: 0.150, wastagePct: 1.0, marginPct: 4.0 },
+    { name: "high stress steel", unit: "lbs", weightPerUnit: 1.0, priceLb: 0.800, fabLb: 0.500, labourLb: 0.150, freightLb: 0.060, wastagePct: 3.0, marginPct: 10.0 },
+    { name: "Mild Steel Channels (C-Channels)", unit: "lbs", weightPerUnit: 1.0, priceLb: 0.630, fabLb: 0.120, labourLb: 0.070, freightLb: 0.050, wastagePct: 4.0, marginPct: 12.0 }
+  ];
+
+  try {
+    const btn = document.getElementById("btnMigrateCatalog");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Wiping & Seeding...";
+    }
+
+    console.log("Starting catalog migration...");
+    
+    // 1. Fetch all existing items
+    const snap = await getDocs(collection(db, "catalog"));
+    console.log(`Found ${snap.size} existing items to clear.`);
+    
+    // 2. Wiping old items
+    for (const docSnap of snap.docs) {
+      await deleteDoc(doc(db, "catalog", docSnap.id));
+    }
+    console.log("Successfully cleared previous catalog collection.");
+
+    // 3. Seeding new items
+    for (const item of seedItems) {
+      const nameTag = item.name.toLowerCase().trim();
+      const tokens = nameTag.split(/[^a-z0-9]+/).filter(Boolean);
+      const tags = [...new Set([nameTag, ...tokens])];
+
+      const payload = {
+        name: item.name,
+        unit: item.unit,
+        weightPerUnit: item.weightPerUnit,
+        priceLb: item.priceLb,
+        fabLb: item.fabLb,
+        labourLb: item.labourLb,
+        freightLb: item.freightLb,
+        wastagePct: item.wastagePct,
+        marginPct: item.marginPct,
+        grade: "ASTM Grade Steel",
+        tags: tags,
+        updatedAt: new Date().toISOString()
+      };
+      
+      await addDoc(collection(db, "catalog"), payload);
+      console.log(`✓ Seeded item: ${item.name}`);
+    }
+
+    alert("Catalog cleared and seeded successfully with 14 optimized realistic items!");
+    
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Seed Realistic Catalog";
+    }
+
+    // Refresh UI
+    loadCatalogItems();
+
+  } catch (error) {
+    console.error("Migration failed:", error);
+    alert("Error running migration: " + error.message);
+    const btn = document.getElementById("btnMigrateCatalog");
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Seed Realistic Catalog";
+    }
+  }
+};
