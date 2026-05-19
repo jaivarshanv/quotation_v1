@@ -8,7 +8,8 @@ import {
 // ── Admin email whitelist ──────────────────────────────
 const ADMIN_EMAILS = [
   "admin@apexindustrial.com",
-  "jaivarshanv@gmail.com"
+  "jaivarshanv@gmail.com",
+  "siddharth@rightangle.dev"
 ];
 
 let currentUser = null;
