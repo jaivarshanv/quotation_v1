@@ -767,7 +767,6 @@ select.form-control {
   vertical-align: top;
 }
 .line-table tr:last-child td { border-bottom: none; }
-.line-table tr:nth-child(even) td { background: var(--ls-bg); }
 .line-table td:last-child {
   text-align: right;
   font-family: var(--font-mono);
@@ -874,39 +873,67 @@ select.form-control {
 }
 
 /* ── PRINT ────────────────────────────────────────── */
-@media print {
-  * { 
-    color: #000 !important; 
-    text-shadow: none !important; 
-    background: transparent !important; 
-    box-shadow: none !important; 
-    opacity: 1 !important;
-  }
-  .nav, .page-hero, .steps-ribbon, #cardInput, #cardClientInfo, #cardDelivery, #cardReview, #unlistedModal,
-  .loader-overlay, .print-row, .disclaimer, .alert, .site-footer { display: none !important; }
-  body { background: white !important; }
-  .container { padding: 0 !important; max-width: 100% !important; margin: 0 !important; }
-  .card { border: none !important; box-shadow: none !important; margin: 0 !important; border-radius: 0 !important; }
-  #quoteOutput { display: block !important; }
-  .qsec-body { display: block !important; border: 1px solid #000 !important; }
-  .qsec-chevron { display: none !important; }
-  .grand-total { border: 2px solid #000 !important; background: #000 !important; color: #fff !important; }
-  .grand-total * { color: #fff !important; }
-  .quote-body { border: 2px solid #000 !important; border-top: none !important; }
-  .line-table th { background: #eee !important; border-bottom: 1px solid #000 !important; }
-  .line-table td { border-bottom: 1px solid #000 !important; }
+.print-only {
+  display: none !important;
+}
 
-  /* Explicitly restore company and client details for PDF/Print */
-  .quote-logo,
-  .corporate-address,
-  .quote-header-divider {
+@media print {
+  @page {
+    margin: 0 !important;
+  }
+  body { 
+    background: #ffffff !important; 
+    color: #000000 !important; 
+    margin: 1.6cm !important;
+  }
+  
+  .nav, .page-hero, .steps-ribbon, #cardInput, #cardClientInfo, #cardDelivery, #cardReview, #unlistedModal,
+  .loader-overlay, .print-row, .disclaimer, .alert, .site-footer { 
+    display: none !important; 
+  }
+  
+  .container { 
+    padding: 0 !important; 
+    max-width: 100% !important; 
+    margin: 0 !important; 
+  }
+  
+  #quoteOutput { 
+    display: block !important; 
+    border: none !important; 
+    box-shadow: none !important; 
+    margin: 0 !important; 
+    padding: 0 !important; 
+    width: 100% !important; 
+    max-width: 100% !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important; 
+    print-color-adjust: exact !important; 
+  }
+
+  .print-only {
     display: block !important;
   }
-  .quote-header-right {
+  .print-only-flex {
     display: flex !important;
   }
-  .quote-footer-mark {
-    display: flex !important;
+
+  /* Compact Print Spacings */
+  #quoteOutput > div {
+    margin-bottom: 16px !important;
+  }
+  #quoteOutput table th,
+  #quoteOutput table td {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+  }
+  #quoteOutput .print-only > div {
+    padding: 10px 16px !important;
+    gap: 16px !important;
+  }
+  #quoteOutput div.print-only:last-of-type {
+    margin-top: 16px !important;
+    padding-top: 16px !important;
   }
 }
 

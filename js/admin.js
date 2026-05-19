@@ -197,7 +197,7 @@ async function loadCatalogItems() {
       const d = docSnap.data();
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><strong>${d.name || "—"}</strong></td>
+        <td title="${d.name || ''}"><strong title="${d.name || ''}">${d.name || "—"}</strong></td>
         <td>$${parseFloat(d.priceLb || 0).toFixed(3)}</td>
         <td>$${parseFloat(d.fabLb || 0).toFixed(3)}</td>
         <td>${d.marginPct !== undefined ? parseFloat(d.marginPct) + '%' : "—"}</td>
@@ -333,7 +333,7 @@ window.inspectQuote = function(item) {
     rawMaterials.forEach(m => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td style="padding:10px; border-bottom:1px solid #eee;"><strong>${m.itemName || "—"}</strong></td>
+        <td style="padding:10px; border-bottom:1px solid #eee;" title="${m.itemName || ''}"><strong title="${m.itemName || ''}">${m.itemName || "—"}</strong></td>
         <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">${Math.round(m.weightLbs).toLocaleString()}</td>
         <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.basePriceLb || 0).toFixed(3)}</td>
         <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.fabLb || 0).toFixed(3)}</td>

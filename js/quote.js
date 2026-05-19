@@ -29,7 +29,7 @@ function populateSection(tbodyId, totId, rows) {
     total += r.amount || 0;
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><strong>${r.item || ''}</strong></td>
+      <td title="${r.item || ''}"><strong title="${r.item || ''}">${r.item || ''}</strong></td>
       <td>${r.qty ? Number(r.qty).toLocaleString('en-US') + ' ' + (r.unit || '') : '—'}</td>
       <td style="font-family:var(--font-mono);font-size:12px">${r.rate || '—'}</td>
       <td style="text-align: right;">${fmt(r.amount || 0)}</td>`;
@@ -96,31 +96,58 @@ function renderQuote(data) {
     }
   }
 
-  // Populate sections
-  const tMaterials = populateSection('rowsMaterials', 'totMaterials', data.module2);
-  const tErect = erect ? populateSection('rowsErect', 'totErect', data.module4) : 0;
+  // Set Valid Until date
+  const validDate = new Date();
+  validDate.setDate(validDate.getDate() + 30);
+  const validStr = validDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  document.getElementById('lblQuoteValid').textContent = validStr;
 
-  const erectSec = document.getElementById('sectionErect');
-  if (erectSec) erectSec.style.display = erect ? '' : 'none';
+  // Populate unified table body
+  const itemsBody = document.getElementById('quoteItemsBody');
+  itemsBody.innerHTML = '';
+  
+  let tMaterials = 0;
+  let tErect = 0;
 
-  // Grand total
-  const grand = tMaterials + tErect;
-  const lo = grand * 0.95, hi = grand * 1.05;
-  document.getElementById('gtAmount').textContent = fmt(grand);
-  document.getElementById('gtRange').textContent =
-    LState.mode === 'preset'
-      ? 'Direct calculation based on provided quantities'
-      : LState.mode === 'image'
-        ? `Approximation range: ${fmt(lo)} – ${fmt(hi)}`
-        : '';
+  // Render Materials
+  (data.module2 || []).forEach(r => {
+    tMaterials += r.amount || 0;
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #e2e8f0';
+    tr.innerHTML = `
+      <td style="padding: 12px 20px; border: 1px solid #e2e8f0;" title="${r.item || ''}"><strong title="${r.item || ''}">${r.item || ''}</strong></td>
+      <td style="padding: 12px 20px; border: 1px solid #e2e8f0;">${r.qty ? Number(r.qty).toLocaleString('en-US') + ' ' + (r.unit || '') : '—'}</td>
+      <td style="padding: 12px 20px; border: 1px solid #e2e8f0; font-family: var(--font-mono);">${r.rate || '—'}</td>
+      <td style="padding: 12px 20px; border: 1px solid #e2e8f0; text-align: right; font-family: var(--font-mono); font-weight: 600;">${fmt(r.amount || 0)}</td>
+    `;
+    itemsBody.appendChild(tr);
+  });
 
-  const inrEl = document.getElementById('gtInr');
-  if (currency === 'both') {
-    inrEl.style.display = 'block';
-    inrEl.textContent = '≈ ' + fmtINR(grand) + ' INR';
-  } else {
-    inrEl.style.display = 'none';
+  // Render Erection if present
+  if (erect) {
+    (data.module4 || []).forEach(r => {
+      tErect += r.amount || 0;
+      const tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid #e2e8f0';
+      tr.innerHTML = `
+        <td style="padding: 12px 20px; border: 1px solid #e2e8f0;" title="${r.item || ''}"><strong title="${r.item || ''}">${r.item || ''}</strong></td>
+        <td style="padding: 12px 20px; border: 1px solid #e2e8f0;">${r.qty ? Number(r.qty).toLocaleString('en-US') + ' ' + (r.unit || '') : '—'}</td>
+        <td style="padding: 12px 20px; border: 1px solid #e2e8f0; font-family: var(--font-mono);">${r.rate || '—'}</td>
+        <td style="padding: 12px 20px; border: 1px solid #e2e8f0; text-align: right; font-family: var(--font-mono); font-weight: 600;">${fmt(r.amount || 0)}</td>
+      `;
+      itemsBody.appendChild(tr);
+    });
   }
+
+  // Calculate tax and totals
+  const subTotal = tMaterials + tErect;
+  const tax = subTotal * 0.06;
+  const finalTotal = subTotal + tax;
+
+  // Populate summary block
+  document.getElementById('lblSummarySubtotal').textContent = fmt(subTotal);
+  document.getElementById('lblSummaryTax').textContent = fmt(tax);
+  document.getElementById('lblSummaryTotal').textContent = fmt(finalTotal);
 
   // Show quote
   const output = document.getElementById('quoteOutput');

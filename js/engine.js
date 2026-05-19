@@ -141,13 +141,13 @@ function saveUnlistedItems() {
       if (cb.checked) checkedCount++;
     });
   }
-  
+
   const badge = document.getElementById('unlistedCountBadge');
   if (badge) {
     const totalCount = badge.getAttribute('data-total') || '0';
     badge.textContent = `${checkedCount} / ${totalCount} selected`;
   }
-  
+
   closeUnlistedModal();
 }
 window.openUnlistedModal = openUnlistedModal;
@@ -164,8 +164,8 @@ function renderCostingReview(quote) {
 
   const matched = (quote._meta && quote._meta.rawMaterials) || [];
   const unavailable = (quote._meta && quote._meta.unavailable) || [];
-  
-  const esc = window.esc || (s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'));
+
+  const esc = window.esc || (s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
 
   // Update Add Unlisted Items button count badge
   const btnOpenUnlisted = document.getElementById('btnOpenUnlisted');
@@ -194,26 +194,23 @@ function renderCostingReview(quote) {
       <td style="text-align: center; vertical-align: middle;">
         <input type="checkbox" checked class="review-checkbox" data-type="matched" data-index="${idx}" style="transform: scale(1.1); cursor: pointer;" />
       </td>
-      <td>
-        <input type="text" class="review-input" value="${esc(m.itemName)}" data-field="itemName" data-type="matched" data-index="${idx}" />
+      <td title="${esc(m.itemName)}">
+        <input type="text" class="review-input" value="${esc(m.itemName)}" title="${esc(m.itemName)}" data-field="itemName" data-type="matched" data-index="${idx}" />
       </td>
-      <td>
-        <input type="number" step="any" class="review-input" value="${m.qty}" data-field="qty" data-type="matched" data-index="${idx}" />
+      <td title="${m.qty}">
+        <input type="number" step="any" class="review-input" value="${m.qty}" title="${m.qty}" data-field="qty" data-type="matched" data-index="${idx}" />
       </td>
-      <td>
-        <input type="text" class="review-input" value="${esc(m.unit || 'lbs')}" data-field="unit" data-type="matched" data-index="${idx}" />
+      <td title="${esc(m.unit || 'lbs')}">
+        <input type="text" class="review-input" value="${esc(m.unit || 'lbs')}" title="${esc(m.unit || 'lbs')}" data-field="unit" data-type="matched" data-index="${idx}" />
       </td>
-      <td>
-        <input type="number" step="any" class="review-input" value="${m.basePriceLb || 0}" data-field="basePriceLb" data-type="matched" data-index="${idx}" />
+      <td title="${m.basePriceLb || 0}">
+        <input type="number" step="any" class="review-input" value="${m.basePriceLb || 0}" title="${m.basePriceLb || 0}" data-field="basePriceLb" data-type="matched" data-index="${idx}" />
       </td>
-      <td>
-        <input type="number" step="any" class="review-input" value="${m.fabLb || 0}" data-field="fabLb" data-type="matched" data-index="${idx}" />
+      <td title="${m.fabLb || 0}">
+        <input type="number" step="any" class="review-input" value="${m.fabLb || 0}" title="${m.fabLb || 0}" data-field="fabLb" data-type="matched" data-index="${idx}" />
       </td>
-      <td>
-        <input type="number" step="any" class="review-input" value="${m.marginPct || 0}" data-field="marginPct" data-type="matched" data-index="${idx}" />
-      </td>
-      <td style="vertical-align: middle;">
-        <span class="chip" style="background:#dcfce7;color:#166534;font-size:11px;font-weight:600;padding:4px 8px;border-radius:4px;">Catalog Match</span>
+      <td title="${m.marginPct || 0}%">
+        <input type="number" step="any" class="review-input" value="${m.marginPct || 0}" title="${m.marginPct || 0}%" data-field="marginPct" data-type="matched" data-index="${idx}" />
       </td>
     `;
     tbody.appendChild(tr);
@@ -227,23 +224,23 @@ function renderCostingReview(quote) {
         <td style="text-align: center; vertical-align: middle;">
           <input type="checkbox" class="review-checkbox" data-type="unavailable" data-index="${idx}" style="transform: scale(1.1); cursor: pointer;" />
         </td>
-        <td>
-          <input type="text" class="review-input" value="${esc(un.name || '')}" data-field="name" data-type="unavailable" data-index="${idx}" />
+        <td title="${esc(un.name || '')}">
+          <input type="text" class="review-input" value="${esc(un.name || '')}" title="${esc(un.name || '')}" data-field="name" data-type="unavailable" data-index="${idx}" />
         </td>
-        <td>
-          <input type="number" step="any" class="review-input" value="${un.qty || 0}" data-field="qty" data-type="unavailable" data-index="${idx}" />
+        <td title="${un.qty || 0}">
+          <input type="number" step="any" class="review-input" value="${un.qty || 0}" title="${un.qty || 0}" data-field="qty" data-type="unavailable" data-index="${idx}" />
         </td>
-        <td>
-          <input type="text" class="review-input" value="${esc(un.unit || 'lbs')}" data-field="unit" data-type="unavailable" data-index="${idx}" />
+        <td title="${esc(un.unit || 'lbs')}">
+          <input type="text" class="review-input" value="${esc(un.unit || 'lbs')}" title="${esc(un.unit || 'lbs')}" data-field="unit" data-type="unavailable" data-index="${idx}" />
         </td>
-        <td>
-          <input type="number" step="any" class="review-input" placeholder="e.g. 0.50" data-field="basePriceLb" data-type="unavailable" data-index="${idx}" />
+        <td title="Base Price per lb">
+          <input type="number" step="any" class="review-input" placeholder="e.g. 0.50" title="Base Price per lb" data-field="basePriceLb" data-type="unavailable" data-index="${idx}" />
         </td>
-        <td>
-          <input type="number" step="any" class="review-input" placeholder="e.g. 0.10" data-field="fabLb" data-type="unavailable" data-index="${idx}" />
+        <td title="Fabrication Cost per lb">
+          <input type="number" step="any" class="review-input" placeholder="e.g. 0.10" title="Fabrication Cost per lb" data-field="fabLb" data-type="unavailable" data-index="${idx}" />
         </td>
-        <td>
-          <input type="number" step="any" class="review-input" placeholder="e.g. 10" data-field="marginPct" data-type="unavailable" data-index="${idx}" />
+        <td title="Margin %">
+          <input type="number" step="any" class="review-input" placeholder="e.g. 10" title="Margin %" data-field="marginPct" data-type="unavailable" data-index="${idx}" />
         </td>
       `;
       unlistedTbody.appendChild(tr);
@@ -253,7 +250,7 @@ function renderCostingReview(quote) {
   // Toggle visible sections — Keep raw requirements text and client info visible for easy cross-reference
   // hide('cardInput');
   // hide('cardClientInfo');
-  
+
   const out = document.getElementById('quoteOutput');
   if (out) out.classList.remove('visible');
 
@@ -468,7 +465,7 @@ IMPORTANT: If "Erection required" is "yes", include a detailed erection/crane co
 // ── Inline alert helper ────────────────────────────────
 function showAlert(msg, type = 'warn') {
   const icons = { warn: '⚠', err: '✖', info: 'ℹ', success: '✔' };
-  
+
   // Get or create fixed toast container
   let container = document.getElementById('toast-container');
   if (!container) {
@@ -497,7 +494,7 @@ function showAlert(msg, type = 'warn') {
   el.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
   el.style.transform = 'translateY(15px)';
   el.style.opacity = '0';
-  
+
   // High-end tailored colors matching component alerts
   if (type === 'success') {
     el.style.background = '#dcfce7';

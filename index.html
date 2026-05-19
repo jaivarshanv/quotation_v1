@@ -97,7 +97,7 @@
                 required />
             </div>
             <div class="form-group">
-              <label class="form-label">M.no</label>
+              <label class="form-label">Contact</label>
               <input class="form-control" type="tel" id="clientPhone" placeholder="e.g. +1 (555) 019-2834" required />
             </div>
             <div class="form-group">
@@ -229,7 +229,6 @@
                 <th style="width: 110px;">Rate ($/lb)</th>
                 <th style="width: 110px;">Fab ($/lb)</th>
                 <th style="width: 110px;">Margin %</th>
-                <th style="width: 130px;">Status</th>
               </tr>
             </thead>
             <tbody id="reviewTableBody"></tbody>
@@ -294,162 +293,101 @@
     </div>
 
     <!-- QUOTE OUTPUT ────────────────────────────────────── -->
-    <div id="quoteOutput">
+    <div id="quoteOutput" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 40px; box-shadow: var(--shadow-md);">
 
-      <!-- Apex Corporate Header -->
-      <div class="quote-header">
-        <div class="quote-header-grid">
-          <!-- Left side: Company Details & Ref No -->
-          <div class="quote-header-left">
-            <div class="quote-logo">Apex <span>Industrial</span></div>
-            <div class="corporate-address">
-              1280 Steel Way, Lancaster, PA 17601<br>
-              sales@apexindustrial.com | +1 (717) 555-0190
-            </div>
-            
-            <div class="quote-header-divider"></div>
-            
-            <div class="quote-header-ref-block">
-              <div class="quote-meta-label">Reference No</div>
-              <div class="quote-ref" id="lblQuoteRef" style="text-align: left;">REF-000000</div>
-              <div class="quote-meta-label" style="margin-top: 10px; margin-bottom: 2px;">Date</div>
-              <div class="quote-ref-date" id="lblQuoteDate">May 18, 2026</div>
-            </div>
-          </div>
-          
-          <!-- Right side: Client / Personal Information -->
-          <div class="quote-header-right">
-            <div class="quote-meta-label" style="margin-bottom: 12px; border-bottom: 1.5px solid var(--ls-divider); padding-bottom: 6px; font-size: 11px;">Client Information</div>
-            
-            <div class="quote-personal-info-grid">
-              <div class="quote-personal-item">
-                <div class="quote-meta-label">Name</div>
-                <div class="quote-meta-val" id="lblClientName">—</div>
-              </div>
-              <div class="quote-personal-item">
-                <div class="quote-meta-label">Email</div>
-                <div class="quote-meta-val font-mono" id="lblClientEmail">—</div>
-              </div>
-              <div class="quote-personal-item">
-                <div class="quote-meta-label">M.no</div>
-                <div class="quote-meta-val font-mono" id="lblClientPhone">—</div>
-              </div>
-              <div class="quote-personal-item">
-                <div class="quote-meta-label">Address</div>
-                <div class="quote-meta-val" id="lblClientAddress">—</div>
-              </div>
-            </div>
+      <!-- Header Grid -->
+      <div class="print-only print-only-flex" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px;">
+        <!-- Left Side: Large Brand Logo & Name -->
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <img src="logo.jpg" alt="Apex Industrial" style="height: 56px; width: auto; object-fit: contain;" onerror="this.style.display='none'">
+          <div>
+            <div style="font-size: 28px; font-weight: 800; color: #000000; letter-spacing: -1px; text-transform: uppercase; line-height: 1;">Apex Industrial</div>
+            <div style="font-size: 10px; font-weight: 600; color: #64748b; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 4px;">Steel &amp; Coil Processing</div>
           </div>
         </div>
-      </div>
-
-      <div class="quote-body">
-
-        <!-- Materials Cost Section -->
-        <div class="qsec" id="sectionMaterials">
-          <div class="qsec-head" onclick="toggleSec(this)">
-            <div class="qsec-label">
-              Materials Cost
-            </div>
-            <div class="qsec-right">
-              <span class="qsec-total" id="totMaterials">$0.00</span>
-              <span class="qsec-chevron">▶</span>
-            </div>
-          </div>
-          <div class="qsec-body">
-            <table class="line-table">
-              <thead>
-                <tr>
-                  <th>Item Description</th>
-                  <th style="width: 120px;">Quantity</th>
-                  <th style="width: 120px;">Rate ($/lb)</th>
-                  <th style="width: 140px; text-align: right;">Amount (USD)</th>
-                </tr>
-              </thead>
-              <tbody id="rowsMaterials"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- Erection & Field Work Section -->
-        <div class="qsec" id="sectionErect" style="display:none;">
-          <div class="qsec-head" onclick="toggleSec(this)">
-            <div class="qsec-label">
-              Erection &amp; Field Work
-            </div>
-            <div class="qsec-right">
-              <span class="qsec-total" id="totErect">$0.00</span>
-              <span class="qsec-chevron">▶</span>
-            </div>
-          </div>
-          <div class="qsec-body">
-            <table class="line-table">
-              <thead>
-                <tr>
-                  <th>Item Description</th>
-                  <th style="width: 120px;">Quantity</th>
-                  <th style="width: 120px;">Rate ($/ton)</th>
-                  <th style="width: 140px; text-align: right;">Amount (USD)</th>
-                </tr>
-              </thead>
-              <tbody id="rowsErect"></tbody>
-            </table>
-          </div>
-        </div>
-
-      </div><!-- /quote-body -->
-
-      <!-- B2B Margin Approval Registry -->
-      <div class="approval-box" id="approvalBox">
-        <div class="approval-status-wrap">
-          <div class="quote-meta-label" style="margin-bottom: 0;">Authorization Status</div>
-          <span class="approval-badge status-green" id="lblApprovalBadge">Auto-Approved</span>
-        </div>
-        <div class="approval-log">
-          <div class="approval-log-item">
-            <span class="approval-log-dot"></span>
-            Costing Eng.
-          </div>
-          <div class="approval-log-item">
-            <span class="approval-log-dot"></span>
-            Prod. Planner
-          </div>
-          <div class="approval-log-item">
-            <span class="approval-log-dot" id="dotFinance"></span>
-            Finance Admin
-          </div>
-        </div>
-      </div>
-
-      <div class="grand-total">
-        <div>
-          <div class="gt-label">Total Estimated Project Cost</div>
-          <div class="gt-range" id="gtRange"></div>
-        </div>
-        <div style="text-align:right">
-          <div class="gt-amount" id="gtAmount">$0.00</div>
-          <div class="gt-inr" id="gtInr" style="display:none"></div>
-        </div>
-      </div>
-
-      <!-- B2B Authenticity & Print Mark -->
-      <div class="quote-footer-mark">
-        <div>
+        
+        <!-- Right Side: Company Details -->
+        <div style="text-align: right; font-size: 12px; color: #334155; line-height: 1.45;">
           <strong>Apex Industrial &amp; Coil Processing Corp.</strong><br>
-          Authorized electronic RFQ summary. Digitally signed &amp; verified.
-        </div>
-        <div class="qr-placeholder">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round" style="color:var(--ls-charcoal)">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-            <path d="M14 14h2v2h-2z M18 18h3v3h-3z M14 20h2v1h-2z M18 14h3v2h-3z"></path>
-          </svg>
+          1280 Steel Way, Lancaster, PA 17601<br>
+          Phone: +1 (717) 555-0190 | sales@apexindustrial.com
         </div>
       </div>
 
-      <div class="print-row">
+      <!-- Monochrome Info Block -->
+      <div class="print-only" style="margin-bottom: 32px;">
+        <!-- Top bar -->
+        <div style="background: #000000; color: #ffffff; padding: 10px 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-radius: 4px 4px 0 0;">
+          Quotation Details
+        </div>
+        <!-- Body block -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-top: none; padding: 20px 24px; border-radius: 0 0 4px 4px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+          <!-- Left side: Quote Details -->
+          <div style="font-size: 13px; color: #334155; line-height: 1.75;">
+            <div><strong style="color: #000000;">Quote Reference:</strong> <span id="lblQuoteRef" style="font-family: var(--font-mono); font-weight: 600; color: #000000;">REF-000000</span></div>
+            <div><strong style="color: #000000;">Date:</strong> <span id="lblQuoteDate">May 19, 2026</span></div>
+            <div><strong style="color: #000000;">Valid Until:</strong> <span id="lblQuoteValid">June 18, 2026</span></div>
+          </div>
+          <!-- Right side: Customer Details -->
+          <div style="font-size: 13px; color: #334155; line-height: 1.75;">
+            <div><strong style="color: #000000;">Customer Name:</strong> <span id="lblClientName">—</span></div>
+            <div><strong style="color: #000000;">Address:</strong> <span id="lblClientAddress">—</span></div>
+            <div><strong style="color: #000000;">Contact:</strong> <span id="lblClientPhone">—</span></div>
+            <div><strong style="color: #000000;">Email:</strong> <span id="lblClientEmail">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Itemized Table block -->
+      <div style="border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 32px; background: #ffffff;">
+        <table class="line-table" style="width: 100%; border-collapse: collapse; margin: 0;">
+          <thead>
+            <tr style="background: #000000;">
+              <th style="color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 20px; text-align: left; border: none; background: #000000 !important;">Item Description</th>
+              <th style="color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 20px; text-align: left; width: 120px; border: none; background: #000000 !important;">Quantity</th>
+              <th style="color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 20px; text-align: left; width: 120px; border: none; background: #000000 !important;">Unit Price</th>
+              <th style="color: #ffffff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 20px; text-align: right; width: 140px; border: none; background: #000000 !important;">Amount (USD)</th>
+            </tr>
+          </thead>
+          
+          <!-- Unified tbody for both Materials & Erection items -->
+          <tbody id="quoteItemsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Unified Summary block -->
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 32px;">
+        <table cellpadding="0" cellspacing="0" style="width: 320px; border: 1px solid #e2e8f0; border-radius: 4px; border-collapse: collapse; overflow: hidden; background: #ffffff;">
+          <!-- Materials row -->
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 12px 20px; font-size: 13px; color: #334155; text-align: left;">Sub Total:</td>
+            <td id="lblSummarySubtotal" style="padding: 12px 20px; font-size: 13px; font-family: var(--font-mono); font-weight: 600; color: #000000; text-align: right;">$0.00</td>
+          </tr>
+          <!-- Tax row -->
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 12px 20px; font-size: 13px; color: #334155; text-align: left;">Tax (6%):</td>
+            <td id="lblSummaryTax" style="padding: 12px 20px; font-size: 13px; font-family: var(--font-mono); font-weight: 600; color: #000000; text-align: right;">$0.00</td>
+          </tr>
+          <!-- Grand Total row -->
+          <tr style="background: #000000; color: #ffffff;">
+            <td style="padding: 14px 20px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; text-align: left; background: #000000 !important; color: #ffffff !important;">Grand Total:</td>
+            <td id="lblSummaryTotal" style="padding: 14px 20px; font-size: 13px; font-family: var(--font-mono); font-weight: 700; text-align: right; background: #000000 !important; color: #ffffff !important;">$0.00</td>
+          </tr>
+        </table>
+      </div>
+
+      <!-- Verification Footer -->
+      <div class="print-only" style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 32px; margin-top: 32px;">
+        <div style="font-size: 12px; font-weight: 600; color: #000000; letter-spacing: 0.5px;">
+          Verified and digitally authorized by ApexIndustrial
+        </div>
+        <div style="font-size: 24px; font-weight: 800; color: #000000; margin-top: 16px; letter-spacing: -0.5px; text-transform: uppercase;">
+          Thank You!
+        </div>
+      </div>
+
+      <!-- Action buttons (hidden during print) -->
+      <div class="print-row" style="margin-top: 32px; display: flex; gap: 12px; justify-content: center;">
         <button class="btn btn-secondary btn-sm" onclick="window.print()">Print Quote</button>
         <button class="btn btn-ghost btn-sm" id="emailBtn" onclick="sendEmail()">Send via Email</button>
         <button class="btn btn-primary btn-sm" onclick="resetTool()">New Quote</button>
