@@ -96,38 +96,50 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
           <td style="padding:32px;background-color:#ffffff;border-bottom:1px solid #e2e8f0">
             <table width="100%" cellpadding="0" cellspacing="0" border="0">
               <tr>
-                <td valign="top">
+                <!-- Left side: Company Details & Ref -->
+                <td width="52%" valign="top" style="padding-right:20px;">
+                  <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:6px;letter-spacing:-0.02em;">
+                    Apex <span style="font-weight:400;color:#64748b;">Industrial</span>
+                  </div>
                   <div style="font-size:11px;color:#64748b;line-height:1.4">
                     1280 Steel Way, Lancaster, PA 17601<br>
                     sales@apexindustrial.com | +1 (717) 555-0190
                   </div>
+                  
+                  <div style="margin-top:16px;border-top:1px solid #e2e8f0;padding-top:12px;">
+                    <div style="color:#64748b;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px">Reference No</div>
+                    <div style="font-family:monospace;font-size:14px;font-weight:600;color:#0f172a">${refNo}</div>
+                    <div style="color:#64748b;font-size:11px;margin-top:4px">${date}</div>
+                  </div>
                 </td>
-                <td align="right" valign="top">
-                  <div style="font-family:monospace;font-size:14px;font-weight:600;color:#0f172a">${refNo}</div>
-                  <div style="font-size:12px;color:#64748b;margin-top:4px">${date}</div>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="2" style="padding-top:24px">
-                  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:13px">
+                
+                <!-- Right side: Client / Personal Info -->
+                <td width="48%" valign="top" align="right" style="border-left:1px solid #f1f5f9;padding-left:24px;">
+                  <div style="color:#64748b;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:12px;text-align:right">Client Information</div>
+                  
+                  <table cellpadding="0" cellspacing="0" border="0" style="font-size:13px;text-align:right;width:100%;">
                     <tr>
-                      <td width="50%" valign="top" style="padding-bottom:12px">
-                        <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px">Client Name</div>
-                        <div style="color:#0f172a;font-weight:500">${client}</div>
-                      </td>
-                      <td width="50%" valign="top" style="padding-bottom:12px">
-                        <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px">Client Email</div>
-                        <div style="color:#0f172a;font-weight:500">${email}</div>
+                      <td style="padding-bottom:10px;text-align:right;">
+                        <div style="color:#64748b;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px">Name</div>
+                        <div style="color:#0f172a;font-weight:600;font-size:13px;">${client}</div>
                       </td>
                     </tr>
                     <tr>
-                      <td width="50%" valign="top">
-                        <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px">Mobile Number</div>
-                        <div style="color:#0f172a;font-weight:500">${phone}</div>
+                      <td style="padding-bottom:10px;text-align:right;">
+                        <div style="color:#64748b;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px">Email</div>
+                        <div style="color:#0f172a;font-family:monospace;font-size:12px;">${email}</div>
                       </td>
-                      <td width="50%" valign="top">
-                        <div style="color:#64748b;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px">Delivery Address</div>
-                        <div style="color:#0f172a;font-weight:500">${address}</div>
+                    </tr>
+                    <tr>
+                      <td style="padding-bottom:10px;text-align:right;">
+                        <div style="color:#64748b;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px">Mobile Number</div>
+                        <div style="color:#0f172a;font-family:monospace;font-size:12px;">${phone}</div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="text-align:right;">
+                        <div style="color:#64748b;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:2px">Delivery Address</div>
+                        <div style="color:#0f172a;line-height:1.3;font-size:12px;">${address}</div>
                       </td>
                     </tr>
                   </table>
@@ -247,7 +259,35 @@ async function sendEmail() {
     });
 
     if (!res.ok) throw new Error('Server responded with ' + res.status);
-    showAlert('Quotation sent successfully to ' + clientEmail, 'success');
+
+    // Send confirmation copy to Sender (logged-in salesperson or admin)
+    const user = window.getAuthUser ? window.getAuthUser() : null;
+    const senderEmail = user?.email || 'admin@apexindustrial.com';
+
+    if (senderEmail && senderEmail.toLowerCase() !== clientEmail.toLowerCase()) {
+      const confirmParams = {
+        ...templateParams,
+        to_email: senderEmail,
+        to_name: user?.displayName || 'Apex Industrial Sales',
+        quote_id: `${refNo} (Confirmation Copy)`
+      };
+
+      try {
+        await fetch('/v1/email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(confirmParams)
+        });
+        console.log('[Email] Confirmation copy sent to ' + senderEmail);
+        showAlert('Email sent to ' + clientEmail, 'success');
+      } catch (confirmErr) {
+        console.warn('[Email] Failed to send confirmation copy to ' + senderEmail, confirmErr);
+        // Do not fail the whole transaction if only the confirmation copy fails
+        showAlert('Email sent to ' + clientEmail, 'success');
+      }
+    } else {
+      showAlert('Email sent to ' + clientEmail, 'success');
+    }
   } catch (err) {
     console.error('Email failed:', err);
     showAlert('Error: ' + err.message, 'err');

@@ -298,36 +298,47 @@
 
       <!-- Apex Corporate Header -->
       <div class="quote-header">
-        <div class="quote-brand">
-          <div>
+        <div class="quote-header-grid">
+          <!-- Left side: Company Details & Ref No -->
+          <div class="quote-header-left">
             <div class="quote-logo">Apex <span>Industrial</span></div>
-            <div class="corporate-address"
-              style="font-size: 11.5px; color: var(--ls-mid, #6e6e73); margin-top: 4px; line-height: 1.4;">
+            <div class="corporate-address">
               1280 Steel Way, Lancaster, PA 17601<br>
               sales@apexindustrial.com | +1 (717) 555-0190
             </div>
+            
+            <div class="quote-header-divider"></div>
+            
+            <div class="quote-header-ref-block">
+              <div class="quote-meta-label">Reference No</div>
+              <div class="quote-ref" id="lblQuoteRef" style="text-align: left;">REF-000000</div>
+              <div class="quote-meta-label" style="margin-top: 10px; margin-bottom: 2px;">Date</div>
+              <div class="quote-ref-date" id="lblQuoteDate">May 18, 2026</div>
+            </div>
           </div>
-          <div>
-            <div class="quote-ref" id="lblQuoteRef">REF-000000</div>
-            <div class="quote-ref-date" id="lblQuoteDate">May 18, 2026</div>
-          </div>
-        </div>
-        <div class="quote-meta-grid">
-          <div>
-            <div class="quote-meta-label">Name</div>
-            <div class="quote-meta-val" id="lblClientName">—</div>
-          </div>
-          <div>
-            <div class="quote-meta-label">Email</div>
-            <div class="quote-meta-val" id="lblClientEmail">—</div>
-          </div>
-          <div>
-            <div class="quote-meta-label">M.no</div>
-            <div class="quote-meta-val" id="lblClientPhone">—</div>
-          </div>
-          <div>
-            <div class="quote-meta-label">Address</div>
-            <div class="quote-meta-val" id="lblClientAddress">—</div>
+          
+          <!-- Right side: Client / Personal Information -->
+          <div class="quote-header-right">
+            <div class="quote-meta-label" style="margin-bottom: 12px; border-bottom: 1.5px solid var(--ls-divider); padding-bottom: 6px; font-size: 11px;">Client Information</div>
+            
+            <div class="quote-personal-info-grid">
+              <div class="quote-personal-item">
+                <div class="quote-meta-label">Name</div>
+                <div class="quote-meta-val" id="lblClientName">—</div>
+              </div>
+              <div class="quote-personal-item">
+                <div class="quote-meta-label">Email</div>
+                <div class="quote-meta-val font-mono" id="lblClientEmail">—</div>
+              </div>
+              <div class="quote-personal-item">
+                <div class="quote-meta-label">M.no</div>
+                <div class="quote-meta-val font-mono" id="lblClientPhone">—</div>
+              </div>
+              <div class="quote-personal-item">
+                <div class="quote-meta-label">Address</div>
+                <div class="quote-meta-val" id="lblClientAddress">—</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
