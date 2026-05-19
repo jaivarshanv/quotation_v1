@@ -11,7 +11,7 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
   const today = new Date();
   const date = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const validDate = new Date();
-  validDate.setDate(validDate.getDate() + 30);
+  validDate.setDate(validDate.getDate() + 7);
   const validStr = validDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   const m2Tot = (data.module2 || []).reduce((acc, r) => acc + (r.amount || 0), 0);
@@ -74,18 +74,19 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
             <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:13px;color:#475569;line-height:1.6;">
               <tr>
                 <!-- Column 1: Billed to -->
-                <td width="50%" valign="top">
+                <td width="40%" valign="top">
                   <div style="font-weight:600;color:#64748b;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;margin-bottom:8px;">Billed to</div>
                   <div style="font-weight:600;color:#0f172a;font-size:14px;margin-bottom:4px;">${client}</div>
                   <div style="margin-bottom:2px;">${address}</div>
                   <div style="margin-bottom:2px;font-family:monospace;">${phone}</div>
                   <div style="font-family:monospace;">${email}</div>
                 </td>
-                <!-- Column 2: Quote Number & Dates -->
-                <td width="25%" valign="top">
+                <!-- Column 2: Quote Number -->
+                <td width="35%" valign="top">
                   <div style="font-weight:600;color:#64748b;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;margin-bottom:8px;">Quotation Number</div>
                   <div style="font-family:monospace;font-weight:600;color:#0f172a;font-size:14px;white-space:nowrap;">${refNo}</div>
                 </td>
+                <!-- Column 3: Dates -->
                 <td width="25%" valign="top">
                   <div style="margin-bottom:16px;">
                     <div style="font-weight:600;color:#64748b;text-transform:uppercase;font-size:11px;letter-spacing:0.5px;margin-bottom:4px;">Issue Date</div>
