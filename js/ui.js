@@ -87,16 +87,8 @@ function renderPresetTable() {
 window.renderPresetTable = renderPresetTable;
 
 function syncClientEmailFromAuth() {
-  const emailInput = document.getElementById('clientEmail');
-  if (!emailInput) return;
-
-  const authUser = (typeof window.getAuthUser === 'function') ? window.getAuthUser() : null;
-  const authData = window.currentUserData || {};
-  const email = authUser?.email || authData.email || '';
-
-  if (email && !emailInput.value) {
-    emailInput.value = email;
-  }
+  // Explicitly disabled as per user request to never auto fill client email
+  return;
 }
 window.syncClientEmailFromAuth = syncClientEmailFromAuth;
 

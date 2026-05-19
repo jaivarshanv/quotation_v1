@@ -72,6 +72,13 @@ const PRESET_TITLES = [
 async function generateQuote() {
   const { mode, csvData, imageBase64 } = LState;
 
+  // ── Client Info Validation ──
+  const clientForm = document.getElementById('clientForm');
+  if (clientForm && !clientForm.checkValidity()) {
+    clientForm.reportValidity();
+    return;
+  }
+
   // ── Validation ──
   const paste = (document.getElementById('pasteInput') && document.getElementById('pasteInput').value) || '';
   if (mode === 'image' && !imageBase64) {
