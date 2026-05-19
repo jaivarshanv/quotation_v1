@@ -10,8 +10,6 @@ window.LState = {
   mode: 'csv',
   csvData: null,
   csvRawText: '',
-  imageBase64: null,
-  imageType: null,
   lastQuote: null,
   presetItems: []
 };
@@ -282,7 +280,7 @@ window.setStep = setStep;
 // ── Mode toggle ────────────────────────────────────────
 function setMode(mode) {
   LState.mode = mode;
-  ['csv', 'image', 'preset'].forEach(m => {
+  ['csv', 'preset'].forEach(m => {
     const panel = document.getElementById('mode-' + m);
     if (panel) panel.style.display = m === mode ? 'block' : 'none';
     const tab = document.getElementById('tab-' + m);
@@ -297,7 +295,6 @@ function handleFile(evt, mode) {
   const file = evt.target.files[0];
   if (!file) return;
   if (mode === 'csv') handleCsv(file);
-  else handleImage(file);
 }
 window.handleFile = handleFile;
 
@@ -329,34 +326,12 @@ function handleCsv(file) {
 }
 window.handleCsv = handleCsv;
 
-function handleImage(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    const b64 = e.target.result;
-    LState.imageBase64 = b64.split(',')[1];
-    LState.imageType = file.type || 'image/jpeg';
-    setEl('img-file-name', file.name);
-    setEl('img-file-meta', `${(file.size / 1024).toFixed(1)} KB`);
-    document.getElementById('img-preview').src = b64;
-    show('img-preview-wrap');
-    setStep(2);
-  };
-  reader.readAsDataURL(file);
-}
-window.handleImage = handleImage;
-
 function clearFile(mode) {
   if (mode === 'csv') {
     LState.csvData = null;
     LState.csvRawText = '';
     hide('csv-preview-wrap');
     const el = document.getElementById('file-csv');
-    if (el) el.value = '';
-  } else {
-    LState.imageBase64 = null;
-    LState.imageType = null;
-    hide('img-preview-wrap');
-    const el = document.getElementById('file-img');
     if (el) el.value = '';
   }
   setStep(1);
@@ -367,8 +342,6 @@ window.clearFile = clearFile;
 function resetTool() {
   LState.csvData = null;
   LState.csvRawText = '';
-  LState.imageBase64 = null;
-  LState.imageType = null;
   LState.lastQuote = null;
   LState.presetItems = [];
   renderPresetTable();
@@ -386,7 +359,6 @@ function resetTool() {
   if (elPasteInput) elPasteInput.value = '';
 
   clearFile('csv');
-  clearFile('image');
   const out = document.getElementById('quoteOutput');
   if (out) out.classList.remove('visible');
   const ldr = document.getElementById('loader');
@@ -421,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateGenerateButton();
   }
 
-  ['drop-csv', 'drop-img'].forEach(id => {
+  ['drop-csv'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag-over'); });
@@ -432,7 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const file = e.dataTransfer.files[0];
       if (!file) return;
       if (id === 'drop-csv') handleCsv(file);
-      else handleImage(file);
     });
   });
 });

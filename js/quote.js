@@ -160,8 +160,16 @@ function renderQuote(data) {
 
   // Toggle dynamic PDF unavailable notice inside print-only terms
   const printNotice = document.getElementById('printUnavailableNotice');
+  const printItemsList = document.getElementById('printUnavailableItemsList');
   if (printNotice) {
-    printNotice.style.display = unavailableList.length > 0 ? 'inline' : 'none';
+    if (unavailableList.length > 0) {
+      printNotice.style.display = 'inline';
+      if (printItemsList) {
+        printItemsList.textContent = unavailableList.map(un => `${un.name} (${un.qty ? Number(un.qty).toLocaleString('en-US') + ' ' + (un.unit || 'lbs') : '—'})`).join(', ');
+      }
+    } else {
+      printNotice.style.display = 'none';
+    }
   }
 
   // Calculate tax and totals

@@ -28,20 +28,20 @@
 .nav-logo {
   display: flex;
   align-items: center;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-size: 26px;
+  font-weight: 850;
+  letter-spacing: -0.03em;
   color: var(--ls-black);
   white-space: nowrap;
 }
 
 .nav-logo-img {
-  height: 48px;
-  max-height: 48px;
+  height: 60px;
+  max-height: 60px;
   width: auto;
   object-fit: contain;
-  margin-right: 14px;
-  border-radius: 6px;
+  margin-right: 16px;
+  border-radius: 8px;
   transition: transform 0.2s;
 }
 
@@ -1160,11 +1160,12 @@ select.form-control {
     height: 70px;
   }
   .nav-logo {
-    font-size: 17px;
+    font-size: 21px;
+    font-weight: 850;
   }
   .nav-logo-img {
-    height: 38px;
-    margin-right: 10px;
+    height: 48px;
+    margin-right: 12px;
   }
   .nav-badge {
     font-size: 10px;

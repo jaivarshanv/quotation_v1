@@ -135,12 +135,14 @@ function updateNavbarUI() {
     nameEl.textContent = currentUser.displayName || currentUser.email;
     container.appendChild(nameEl);
 
-    // My Quotes
+    // My Quotes (hidden)
+    /*
     const histBtn = document.createElement("a");
     histBtn.href = "history.html";
     histBtn.className = "btn btn-ghost btn-sm";
     histBtn.textContent = "My Quotes";
     container.appendChild(histBtn);
+    */
 
     // Admin Dashboard (admin only)
     if (currentUserRole === "admin") {

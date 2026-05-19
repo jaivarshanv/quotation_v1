@@ -77,6 +77,146 @@
       display: inline-block;
       opacity: 0.8;
     }
+
+    .catalog-density-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .catalog-density-table th,
+    .catalog-density-table td {
+      padding: 10px 8px !important;
+      font-size: 12px !important;
+      line-height: 1.4 !important;
+    }
+
+    .name-tooltip-container {
+      position: relative;
+      display: block;
+      width: 100%;
+    }
+    .name-tooltip-container .truncate-text {
+      display: block;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: default;
+    }
+    .name-tooltip-container:hover .tooltip-pop {
+      opacity: 1;
+      visibility: visible;
+    }
+    .tooltip-pop {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: #1d1d1f;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      margin-top: 4px;
+    }
+    .tooltip-pop::after {
+      content: '';
+      position: absolute;
+      bottom: 100%;
+      left: 12px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: transparent transparent #1d1d1f transparent;
+    }
+
+    /* Column-specific widths */
+    .catalog-density-table th:nth-child(1),
+    .catalog-density-table td:nth-child(1) {
+      width: 20%;
+      text-align: left;
+      font-weight: 600;
+    }
+    .catalog-density-table th:nth-child(2),
+    .catalog-density-table td:nth-child(2) {
+      width: 6%;
+      text-align: center;
+    }
+    .catalog-density-table th:nth-child(3),
+    .catalog-density-table td:nth-child(3) {
+      width: 8%;
+      text-align: right;
+    }
+    .catalog-density-table th:nth-child(4),
+    .catalog-density-table td:nth-child(4) {
+      width: 8%;
+      text-align: right;
+    }
+    .catalog-density-table th:nth-child(5),
+    .catalog-density-table td:nth-child(5) {
+      width: 8%;
+      text-align: right;
+    }
+    .catalog-density-table th:nth-child(6),
+    .catalog-density-table td:nth-child(6) {
+      width: 8%;
+      text-align: right;
+    }
+    .catalog-density-table th:nth-child(7),
+    .catalog-density-table td:nth-child(7) {
+      width: 8%;
+      text-align: right;
+    }
+    .catalog-density-table th:nth-child(8),
+    .catalog-density-table td:nth-child(8) {
+      width: 8%;
+      text-align: right;
+    }
+    .catalog-density-table th:nth-child(9),
+    .catalog-density-table td:nth-child(9) {
+      width: 8%;
+      text-align: right;
+    }
+    .catalog-density-table th:nth-child(10),
+    .catalog-density-table td:nth-child(10) {
+      width: 18%;
+      text-align: right;
+    }
+
+    .catalog-density-table td:last-child {
+      text-align: right !important;
+      font-family: inherit !important;
+      font-weight: normal !important;
+    }
+
+    .action-buttons-wrap {
+      display: inline-flex !important;
+      gap: 4px !important;
+      justify-content: flex-end !important;
+      align-items: center !important;
+      width: 100% !important;
+    }
+
+    .catalog-density-table .btn-sm {
+      padding: 4px 6px !important;
+      font-size: 10px !important;
+      font-weight: 500 !important;
+      line-height: 1 !important;
+      min-width: 44px !important;
+      height: 24px !important;
+      border-radius: 6px !important;
+      border: 1px solid var(--ls-divider, #e5e5ea) !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
   </style>
 </head>
 
@@ -109,28 +249,35 @@
       </div>
 
       <div class="card" id="catalogTableContainer" style="grid-column: 1 / -1; display: none;">
-        <div class="card-head">
-          <div class="card-title">Catalog Inventory</div>
-          <div class="card-subtitle">Complete list of items available for quoting</div>
+        <div class="card-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+          <div>
+            <div class="card-title">Catalog Inventory</div>
+            <div class="card-subtitle">Complete list of items available for quoting</div>
+          </div>
+          <div style="flex: 1; max-width: 320px; min-width: 200px;">
+            <input type="text" id="catalogSearchInput" placeholder="🔍 Search inventory items..." class="form-control" style="font-size: 13px; height: 36px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--ls-divider, #e5e5ea); width: 100%;" oninput="filterCatalogItems()" />
+          </div>
         </div>
         <div class="card-body" style="padding:0; overflow-x:auto;">
-          <table class="line-table">
+          <table class="line-table catalog-density-table">
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Price/lb</th>
-                <th>Fab/lb</th>
-                <th>Labour/lb</th>
-                <th>Freight/lb</th>
-                <th>Wastage %</th>
-                <th>Margin %</th>
-                <th></th>
+                <th>Unit</th>
+                <th>Wt/Unit</th>
+                <th title="Price per lb">Prc/lb</th>
+                <th title="Fabrication per lb">Fab/lb</th>
+                <th title="Labour per lb">Lbr/lb</th>
+                <th title="Freight per lb">Frt/lb</th>
+                <th title="Wastage %">Wst %</th>
+                <th title="Margin %">Mrg %</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="catalogTableBody">
               <tr>
-                <td colspan="9" style="text-align:center; padding:20px; color:var(--ls-mid);">
-                  Loading catalog…
+                <td colspan="10" style="text-align:center; padding:20px; color:var(--ls-mid);">
+                   Loading catalog…
                 </td>
               </tr>
             </tbody>
@@ -182,6 +329,21 @@
     <div class="form-group" style="margin-bottom:16px;">
       <label class="form-label">Name</label>
       <input class="form-control" type="text" id="itemName" placeholder="e.g. TMT Rebar Fe500D" />
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">Base Unit</label>
+        <select class="form-control" id="itemUnit">
+          <option value="lbs">lbs (Pounds)</option>
+          <option value="feet">feet (ft)</option>
+          <option value="meters">meters (m)</option>
+          <option value="pcs">pieces (pcs)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Weight per Unit (lbs)</label>
+        <input class="form-control" type="number" step="0.001" id="itemWeightPerUnit" placeholder="1.000" value="1.000" />
+      </div>
     </div>
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
       <div class="form-group">

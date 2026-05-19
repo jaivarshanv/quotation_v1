@@ -9,22 +9,94 @@
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/components.css" />
   <style>
+    /* ── Review / Unlisted table inputs ─────────────── */
     .review-input {
       width: 100%;
-      padding: 6px 10px;
+      padding: 5px 7px;
       border: 1px solid var(--ls-divider, #e5e5ea);
       border-radius: 6px;
       font-family: inherit;
-      font-size: 13px;
+      font-size: 12px;
       background: #ffffff;
-      color: #000000;
+      color: #1d1d1f;
       outline: none;
       transition: border-color 0.2s;
       box-sizing: border-box;
     }
+    .review-input:focus { border-color: #0071e3; }
 
-    .review-input:focus {
-      border-color: #0071e3;
+    /* Hide spin buttons */
+    .review-input[type=number]::-webkit-outer-spin-button,
+    .review-input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .review-input[type=number] { -moz-appearance: textfield; }
+
+    /* Unlisted modal table density */
+    #unlistedModal .line-table th,
+    #unlistedModal .line-table td {
+      padding: 9px 7px !important;
+      font-size: 11.5px !important;
+      vertical-align: middle !important;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    #unlistedModal .line-table td:nth-child(2) {
+      overflow: visible !important;
+    }
+    #unlistedModal .line-table th {
+      white-space: normal;
+      line-height: 1.25;
+      font-size: 10.5px !important;
+    }
+
+    /* Custom suggest autocomplete dropdown overlay styles */
+    .custom-suggest-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      width: 100%;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #ffffff;
+      border: 1px solid var(--ls-divider, #e5e5ea);
+      border-radius: 6px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+      z-index: 10000;
+      margin-top: 4px;
+      box-sizing: border-box;
+    }
+    .custom-suggest-item {
+      padding: 6px 10px;
+      font-size: 11.5px;
+      color: #1d1d1f;
+      cursor: pointer;
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+      transition: background-color 0.15s ease, color 0.15s ease;
+      white-space: normal;
+      word-break: break-word;
+      line-height: 1.3;
+    }
+    .custom-suggest-item:last-child {
+      border-bottom: none;
+    }
+    .custom-suggest-item:hover {
+      background-color: #f5faff;
+      color: #0071e3;
+    }
+    .custom-suggest-item.item-header {
+      font-weight: 700;
+      color: #8e8e93;
+      background-color: #f5f5f7;
+      cursor: default;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--ls-divider, #e5e5ea);
+    }
+    .custom-suggest-item.item-header:hover {
+      background-color: #f5f5f7;
+      color: #8e8e93;
     }
 
     @media screen {
@@ -137,9 +209,8 @@
           <div class="alert alert-info">
             <div class="alert__body">
               <strong>CSV Format</strong>
-              Include columns for: <code>item</code>, <code>description</code>, <code>quantity</code>,
-              <code>unit</code>, <code>grade/spec</code> (optional), <code>length_ft</code> (optional). Any reasonable
-              CSV layout is accepted.
+              <br><small style="color:#6e6e73;">* Note: The unit can be placed adjacent to the quantity (e.g. "1200 lbs"
+                in the Quantity column) or in a separate Unit column.</small>
               <div style="margin-top:12px;">
                 <a class="btn btn-secondary" href="csv-template.csv" download="apex-industrial-csv-template.csv">
                   Download CSV template
@@ -148,25 +219,24 @@
               <div style="margin-top:16px; padding:12px; border:1px solid var(--ls-divider); border-radius:var(--r-sm); background:var(--ls-surface);
                 overflow-x:auto;">
                 <div style="font-weight:600; margin-bottom:10px;">Example inputs</div>
-                <table class="csv-table" style="margin:0; min-width:720px;">
+                <table class="csv-table" style="margin:0; min-width:480px; table-layout: fixed; width: 100%;">
                   <thead>
                     <tr>
-                      <th>item</th>
-                      <th>description</th>
-                      <th>quantity</th>
-                      <th>unit</th>
-                      <th>grade/spec</th>
-                      <th>length_ft</th>
+                      <th style="width: 50%;">ITEM</th>
+                      <th style="width: 25%; text-align: center;">QUANTITY</th>
+                      <th style="width: 25%; text-align: center;">UNIT</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Rebar</td>
-                      <td>Grade 60 reinforcing bar</td>
-                      <td>1200</td>
-                      <td>lbs</td>
-                      <td>A615</td>
-                      <td>blank</td>
+                      <td>Structural Angles (L-Angles)</td>
+                      <td style="text-align: center;">1200</td>
+                      <td style="text-align: center;">lbs</td>
+                    </tr>
+                    <tr>
+                      <td>Mild Steel Channels (C-Channels)</td>
+                      <td style="text-align: center;">2500 lbs</td>
+                      <td style="text-align: center;">(optional)</td>
                     </tr>
                   </tbody>
                 </table>
@@ -218,17 +288,17 @@
         </button>
       </div>
       <div class="card-body" style="padding-top: 20px;">
-        <div style="overflow-x:auto;">
-          <table class="line-table" id="reviewTable" style="margin-bottom: 20px;">
+        <div style="overflow-x:hidden;">
+          <table class="line-table" id="reviewTable" style="margin-bottom: 20px; table-layout: fixed; width: 100%;">
             <thead>
               <tr>
-                <th style="width: 60px; text-align: center;">Active</th>
-                <th>Item Description</th>
-                <th style="width: 120px;">Qty</th>
-                <th style="width: 90px;">Unit</th>
-                <th style="width: 110px;">Rate ($/lb)</th>
-                <th style="width: 110px;">Fab ($/lb)</th>
-                <th style="width: 110px;">Margin %</th>
+                <th style="width: 6%; text-align: center;">Active</th>
+                <th style="width: 38%;">Item Description</th>
+                <th style="width: 10%;">Qty</th>
+                <th style="width: 10%;">Unit</th>
+                <th style="width: 12%;">Rate ($/lb)</th>
+                <th style="width: 12%;">Fab ($/lb)</th>
+                <th style="width: 12%;">Margin %</th>
               </tr>
             </thead>
             <tbody id="reviewTableBody"></tbody>
@@ -247,33 +317,31 @@
     <div class="modal-overlay" id="unlistedModal"
       style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(30, 41, 59, 0.4); backdrop-filter: blur(10px); z-index: 1000; justify-content: center; align-items: center;">
       <div class="modal-card card"
-        style="width: 90%; max-width: 1120px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); animation: fadeUp 0.3s both; background: rgba(255, 255, 255, 0.95); border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 12px;">
+        style="width: 98vw; max-width: 1400px; height: 80vh; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 25px 60px -12px rgba(0,0,0,0.3); animation: fadeUp 0.3s both; background: #ffffff; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px;">
         <div class="card-head"
-          style="border-bottom: 1px solid var(--ls-divider, #e5e5ea); padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; background: rgba(248, 250, 252, 0.8); border-top-left-radius: 12px; border-top-right-radius: 12px;">
+          style="border-bottom: 1px solid var(--ls-divider, #e5e5ea); padding: 20px 28px; display: flex; justify-content: space-between; align-items: center; background: rgba(248, 250, 252, 0.9); border-top-left-radius: 16px; border-top-right-radius: 16px; flex-shrink: 0;">
           <div>
-            <div class="card-title" style="margin: 0; font-size: 18px; color: var(--ls-bold, #1d1d1f);">Unlisted &amp;
-              Unavailable Items</div>
-            <div class="card-desc" style="margin: 4px 0 0 0; color: var(--ls-mid, #6e6e73);">Check unlisted items to add
-              them, and set their custom costing rates.</div>
+            <div class="card-title" style="margin: 0; font-size: 18px; font-weight: 700; color: var(--ls-bold, #1d1d1f);">Unlisted &amp; Unavailable Items</div>
+            <div class="card-desc" style="margin: 4px 0 0 0; font-size: 13px; color: var(--ls-mid, #6e6e73);">Check items to include them, then set custom costing rates.</div>
           </div>
           <button onclick="closeUnlistedModal()"
             style="background: none; border: none; font-size: 28px; cursor: pointer; color: var(--ls-mid, #6e6e73); line-height: 1; padding: 4px;">&times;</button>
         </div>
-        <div class="card-body" style="overflow-y: auto; padding: 20px 24px; flex-grow: 1;">
-          <div style="overflow-x:auto;">
-            <table class="line-table">
+        <div class="card-body" style="overflow-y: auto; padding: 16px 24px; flex-grow: 1;">
+          <div style="overflow: visible;">
+            <table class="line-table" style="table-layout: fixed; width: 100%;">
               <thead>
                 <tr>
-                  <th style="width: 50px; text-align: center;">Add</th>
-                  <th>Item Description</th>
-                  <th style="width: 90px;">Qty</th>
-                  <th style="width: 70px;">Unit</th>
-                  <th style="width: 95px;">Rate ($/lb)</th>
-                  <th style="width: 95px;">Fab ($/lb)</th>
-                  <th style="width: 95px;">Labour ($/lb)</th>
-                  <th style="width: 95px;">Freight ($/lb)</th>
-                  <th style="width: 95px;">Wastage %</th>
-                  <th style="width: 95px;">Margin %</th>
+                  <th style="width: 3.5%; text-align: center;">Add</th>
+                  <th style="width: 21%;">Item Description</th>
+                  <th style="width: 7%;">Qty</th>
+                  <th style="width: 6%;">Unit</th>
+                  <th style="width: 9.5%;">Rate ($/lb)</th>
+                  <th style="width: 9.5%;">Fab ($/lb)</th>
+                  <th style="width: 9.5%;">Labour ($/lb)</th>
+                  <th style="width: 9.5%;">Freight ($/lb)</th>
+                  <th style="width: 9.5%;">Wastage %</th>
+                  <th style="width: 9.5%;">Margin %</th>
                 </tr>
               </thead>
               <tbody id="unlistedTableBody"></tbody>
@@ -281,7 +349,7 @@
           </div>
         </div>
         <div
-          style="padding: 16px 24px; border-top: 1px solid var(--ls-divider, #e5e5ea); display: flex; justify-content: flex-end; gap: 12px; background: rgba(248, 250, 252, 0.8); border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;">
+          style="padding: 14px 28px; border-top: 1px solid var(--ls-divider, #e5e5ea); display: flex; justify-content: flex-end; gap: 12px; background: rgba(248, 250, 252, 0.9); border-bottom-left-radius: 16px; border-bottom-right-radius: 16px; flex-shrink: 0;">
           <button class="btn btn-secondary" onclick="closeUnlistedModal()">Cancel</button>
           <button class="btn btn-primary" onclick="saveUnlistedItems()">Apply &amp; Close</button>
         </div>
@@ -430,9 +498,8 @@
           days, with prices quoted FOB Shipping Point and exclusive of applicable sales tax and freight charges. Payment
           requires a 30% advance with the purchase order, and the remaining 70% is due prior to shipment. Final billing
           will be calculated based on the certified scale weight at the time of loading, subject to a standard +/- 10%
-          weight tolerance, and a Mill Test Report (MTR) will be provided.<span id="printUnavailableNotice"
-            style="display: none; font-weight: 500; color: #a8aca6;"> Note: Some requested items were declared
-            unavailable when this quotation was generated.</span>
+          weight tolerance, and a Mill Test Report (MTR) will be provided.<div id="printUnavailableNotice"
+            style="display: none; font-weight: 500; color: #64748b; margin-top: 4px;">Note: The following requested items were declared unavailable and not quoted: <strong id="printUnavailableItemsList" style="color: #64748b; font-weight: 600;"></strong>.</div>
         </div>
       </div>
 

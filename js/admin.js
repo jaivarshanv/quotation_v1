@@ -181,49 +181,93 @@ window.sortBy = function(col) {
 //  Catalog CRUD
 // ══════════════════════════════════════════════════════
 const catalogTbody = document.getElementById("catalogTableBody");
+let catalogItemsList = [];
 
 async function loadCatalogItems() {
-  catalogTbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:var(--ls-mid);">Loading catalog…</td></tr>`;
+  catalogTbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px; color:var(--ls-mid);">Loading catalog…</td></tr>`;
   try {
     const snap = await getDocs(collection(db, "catalog"));
-    catalogTbody.innerHTML = "";
+    catalogItemsList = [];
 
     if (snap.empty) {
-      catalogTbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--ls-mid); padding:20px;">No items in catalog. Add one above.</td></tr>`;
+      catalogTbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--ls-mid); padding:20px;">No items in catalog. Add one above.</td></tr>`;
       return;
     }
 
     snap.forEach(docSnap => {
       const d = docSnap.data();
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td title="${d.name || ''}"><strong title="${d.name || ''}">${d.name || "—"}</strong></td>
-        <td>$${parseFloat(d.priceLb || 0).toFixed(3)}</td>
-        <td>$${parseFloat(d.fabLb || 0).toFixed(3)}</td>
-        <td>$${parseFloat(d.labourLb || 0).toFixed(3)}</td>
-        <td>$${parseFloat(d.freightLb || 0).toFixed(3)}</td>
-        <td>${d.wastagePct !== undefined ? parseFloat(d.wastagePct) + '%' : "0%"}</td>
-        <td>${d.marginPct !== undefined ? parseFloat(d.marginPct) + '%' : "—"}</td>
-        <td>
-          <button class="btn btn-ghost btn-sm" onclick="openItemForm('${docSnap.id}')">Edit</button>
-          <button class="btn btn-ghost btn-sm" style="color:#dc2626;" onclick="deleteItem('${docSnap.id}','${(d.name||"").replace(/'/g,"\\'")}')">Delete</button>
-        </td>
-      `;
-      catalogTbody.appendChild(tr);
+      catalogItemsList.push({ id: docSnap.id, ...d });
     });
+
+    // Reset search input value on reload
+    const searchInput = document.getElementById("catalogSearchInput");
+    if (searchInput) searchInput.value = "";
+
+    renderCatalogTable(catalogItemsList);
 
     // Refresh engine's in-memory catalog
     if (window.LocalEngine?.loadCatalog) window.LocalEngine.loadCatalog();
   } catch (error) {
     console.error("Error loading catalog:", error);
-    catalogTbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red; padding:20px;">Error: ${error.message}</td></tr>`;
+    catalogTbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:red; padding:20px;">Error: ${error.message}</td></tr>`;
   }
 }
+
+function renderCatalogTable(items) {
+  catalogTbody.innerHTML = "";
+  if (items.length === 0) {
+    catalogTbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--ls-mid); padding:20px;">No items match search filter.</td></tr>`;
+    return;
+  }
+
+  items.forEach(d => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>
+        <div class="name-tooltip-container">
+          <strong class="truncate-text">${d.name || "—"}</strong>
+          <span class="tooltip-pop">${d.name || "—"}</span>
+        </div>
+      </td>
+      <td>${d.unit || "lbs"}</td>
+      <td>${d.weightPerUnit !== undefined ? parseFloat(d.weightPerUnit).toFixed(3) : "1.000"}</td>
+      <td>$${parseFloat(d.priceLb || 0).toFixed(3)}</td>
+      <td>$${parseFloat(d.fabLb || 0).toFixed(3)}</td>
+      <td>$${parseFloat(d.labourLb || 0).toFixed(3)}</td>
+      <td>$${parseFloat(d.freightLb || 0).toFixed(3)}</td>
+      <td>${d.wastagePct !== undefined ? parseFloat(d.wastagePct) + '%' : "0%"}</td>
+      <td>${d.marginPct !== undefined ? parseFloat(d.marginPct) + '%' : "—"}</td>
+      <td>
+        <div class="action-buttons-wrap">
+          <button class="btn btn-ghost btn-sm" onclick="openItemForm('${d.id}')">Edit</button>
+          <button class="btn btn-ghost btn-sm" style="color:#dc2626;" onclick="deleteItem('${d.id}','${(d.name||"").replace(/'/g,"\\'")}')">Delete</button>
+        </div>
+      </td>
+    `;
+    catalogTbody.appendChild(tr);
+  });
+}
+
+window.filterCatalogItems = function() {
+  const query = document.getElementById("catalogSearchInput").value.toLowerCase().trim();
+  if (!query) {
+    renderCatalogTable(catalogItemsList);
+    return;
+  }
+  const filtered = catalogItemsList.filter(item => {
+    const nameMatch = (item.name || "").toLowerCase().includes(query);
+    const tagsMatch = Array.isArray(item.tags) && item.tags.some(t => String(t).toLowerCase().includes(query));
+    return nameMatch || tagsMatch;
+  });
+  renderCatalogTable(filtered);
+};
 
 window.openItemForm = async function(docId = null) {
   document.getElementById("itemDocId").value = docId || "";
   document.getElementById("itemModalTitle").textContent = docId ? "Edit Item" : "Add Item";
   document.getElementById("itemName").value = "";
+  document.getElementById("itemUnit").value = "lbs";
+  document.getElementById("itemWeightPerUnit").value = "1.000";
   document.getElementById("itemPriceLb").value = "";
   document.getElementById("itemFabLb").value = "";
   document.getElementById("itemLabourLb").value = "";
@@ -238,6 +282,8 @@ window.openItemForm = async function(docId = null) {
       if (snap.exists()) {
         const d = snap.data();
         document.getElementById("itemName").value    = d.name || "";
+        document.getElementById("itemUnit").value    = d.unit || "lbs";
+        document.getElementById("itemWeightPerUnit").value = d.weightPerUnit !== undefined ? d.weightPerUnit : "1.000";
         document.getElementById("itemPriceLb").value = d.priceLb || "";
         document.getElementById("itemFabLb").value   = d.fabLb || "";
         document.getElementById("itemLabourLb").value = d.labourLb !== undefined ? d.labourLb : "";
@@ -260,6 +306,8 @@ window.closeItemForm = function() {
 window.saveItem = async function() {
   const docId   = document.getElementById("itemDocId").value.trim();
   const name    = document.getElementById("itemName").value.trim();
+  const unit    = document.getElementById("itemUnit").value;
+  const weightPerUnitVal = document.getElementById("itemWeightPerUnit").value.trim();
   const priceLb = parseFloat(document.getElementById("itemPriceLb").value);
   const fabLb   = parseFloat(document.getElementById("itemFabLb").value);
   const labourLbVal  = document.getElementById("itemLabourLb").value.trim();
@@ -268,6 +316,13 @@ window.saveItem = async function() {
   const marginPctVal = document.getElementById("itemMarginPct").value.trim();
 
   if (!name)                        { showItemMsg("Name is required.", "error");        return; }
+  
+  let weightPerUnit = 1;
+  if (weightPerUnitVal !== "") {
+    weightPerUnit = parseFloat(weightPerUnitVal);
+    if (isNaN(weightPerUnit) || weightPerUnit <= 0) { showItemMsg("Enter a valid Weight per Unit.", "error"); return; }
+  }
+
   if (isNaN(priceLb) || priceLb <= 0) { showItemMsg("Enter a valid Price/lb.", "error"); return; }
   if (isNaN(fabLb)   || fabLb < 0)    { showItemMsg("Enter a valid Fab/lb.", "error");   return; }
   
@@ -302,7 +357,7 @@ window.saveItem = async function() {
   const tokens = nameTag.split(/[^a-z0-9]+/).filter(Boolean);
   const tags = [...new Set([nameTag, ...tokens])];
 
-  const payload = { name, tags, priceLb, fabLb, labourLb, freightLb, wastagePct, updatedAt: new Date().toISOString() };
+  const payload = { name, tags, priceLb, fabLb, labourLb, freightLb, wastagePct, unit, weightPerUnit, updatedAt: new Date().toISOString() };
   if (marginPct !== undefined) {
     payload.marginPct = marginPct;
   }

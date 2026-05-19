@@ -290,9 +290,9 @@ function renderCostingReview(quote) {
         <td style="text-align: center; vertical-align: middle;">
           <input type="checkbox" class="review-checkbox" data-type="unavailable" data-index="${idx}" onchange="window.updateUnlistedCountBadge()" style="transform: scale(1.1); cursor: pointer;" />
         </td>
-        <td title="${esc(un.name || '')}">
-          <input type="text" class="review-input" value="${esc(un.name || '')}" title="${esc(un.name || '')}" data-field="name" data-type="unavailable" data-index="${idx}" oninput="window.suggestUnlistedMatch(this)" />
-          <div class="match-suggest-box" style="font-size: 11px; margin-top: 4px; display: none; text-align: left; padding-left: 4px;"></div>
+        <td title="${esc(un.name || '')}" style="position: relative;">
+          <input type="text" class="review-input" value="${esc(un.name || '')}" title="${esc(un.name || '')}" data-field="name" data-type="unavailable" data-index="${idx}" oninput="window.suggestUnlistedMatch(this)" onfocus="window.suggestUnlistedMatch(this)" />
+          <div class="match-suggest-box" style="position: absolute; top: 100%; left: 0; width: 100%; z-index: 1000; font-size: 11px; display: none; text-align: left; padding: 2px 0 0 0; background: transparent;"></div>
         </td>
         <td title="${un.qty || 0}">
           <input type="number" step="any" class="review-input" value="${un.qty || 0}" title="${un.qty || 0}" data-field="qty" data-type="unavailable" data-index="${idx}" />
@@ -746,30 +746,30 @@ window.suggestUnlistedMatch = function (inputEl) {
   const esc = window.esc || (s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
 
   if (topMatches.length > 0) {
-    let html = `<select class="review-input" style="font-size:11px; padding:2px 4px; width:100%; border:1px solid #0071e3; border-radius:4px; background-color:#f5faff; color:#0071e3; cursor:pointer;" onchange="window.handleUnlistedSelectChange(this)">`;
-    html += `<option value="">Select catalog match...</option>`;
+    let html = `<div class="custom-suggest-dropdown">`;
+    html += `<div class="custom-suggest-item item-header">Top Matches</div>`;
     topMatches.forEach(m => {
-      html += `<option value="${m.catIdx}">${esc(m.item.name)}</option>`;
+      html += `<div class="custom-suggest-item" onclick="window.applyCatalogMatch(this, ${m.catIdx})">${esc(m.item.name)}</div>`;
     });
     // Add spacer and allow choosing all items too
-    html += `<option disabled>──────────</option>`;
+    html += `<div class="custom-suggest-item item-header">All Catalog Items</div>`;
     catalog.forEach((item, catIdx) => {
       // Don't duplicate if already in top matches
       if (!topMatches.some(tm => tm.catIdx === catIdx)) {
-        html += `<option value="${catIdx}">${esc(item.name)}</option>`;
+        html += `<div class="custom-suggest-item" onclick="window.applyCatalogMatch(this, ${catIdx})">${esc(item.name)}</div>`;
       }
     });
-    html += `</select>`;
+    html += `</div>`;
     suggestDiv.innerHTML = html;
     suggestDiv.style.display = 'block';
   } else {
     // Dropdown showing all catalog items
-    let html = `<select class="review-input" style="font-size:11px; padding:2px 4px; width:100%; border:1px solid #ccc; border-radius:4px; background-color:#fff; color:#444; cursor:pointer;" onchange="window.handleUnlistedSelectChange(this)">`;
-    html += `<option value="">🔍 Match with catalog item...</option>`;
+    let html = `<div class="custom-suggest-dropdown">`;
+    html += `<div class="custom-suggest-item item-header">All Catalog Items</div>`;
     catalog.forEach((item, catIdx) => {
-      html += `<option value="${catIdx}">${esc(item.name)}</option>`;
+      html += `<div class="custom-suggest-item" onclick="window.applyCatalogMatch(this, ${catIdx})">${esc(item.name)}</div>`;
     });
-    html += `</select>`;
+    html += `</div>`;
     suggestDiv.innerHTML = html;
     suggestDiv.style.display = 'block';
   }
@@ -846,3 +846,19 @@ window.updateUnlistedCountBadge = function () {
     badge.textContent = `${checked} / ${total} selected`;
   }
 };
+
+// Automatically update title tooltip on input for all review inputs
+document.addEventListener('input', function(e) {
+  if (e.target && e.target.classList.contains('review-input')) {
+    e.target.title = e.target.value;
+  }
+});
+
+// Click outside to close unlisted suggestion box dropdowns
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.match-suggest-box') && !e.target.closest('[data-field="name"]')) {
+    document.querySelectorAll('.match-suggest-box').forEach(box => {
+      box.style.display = 'none';
+    });
+  }
+});

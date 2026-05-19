@@ -50,7 +50,12 @@ async function loadCatalog() {
         tags: Array.isArray(d.tags) ? d.tags.map(t => String(t).toLowerCase()) : [],
         priceLb: parseFloat(d.priceLb) || 0,
         fabLb: parseFloat(d.fabLb) || 0,
+        labourLb: parseFloat(d.labourLb) || 0,
+        freightLb: parseFloat(d.freightLb) || 0,
+        wastagePct: parseFloat(d.wastagePct) || 0,
         marginPct: d.marginPct !== undefined ? parseFloat(d.marginPct) : undefined,
+        unit: d.unit || 'lbs',
+        weightPerUnit: d.weightPerUnit !== undefined ? parseFloat(d.weightPerUnit) : 1.0,
         note: d.note || ''
       });
     });
@@ -288,16 +293,42 @@ function findCol(headers, key) {
   return -1;
 }
 
-function toWeightLbs(qty, unit, lengthFt) {
+function toWeightLbs(qty, unit, lengthFt, catalogEntry = null) {
   if (!qty || isNaN(qty)) return 0;
-  const u = String(unit || '').toLowerCase().replace(/[^a-z]/g, '');
-  if (u === 'tons' || u === 'ton' || u === 'shorttons') return qty * 2000;
-  if (u === 'mt' || u === 'metricton' || u === 'tonnes') return qty * 2204.62;
-  if (u === 'kg' || u === 'kilograms') return qty * 2.20462;
-  if (u === 'lbs' || u === 'lb' || u === 'pounds') return qty;
+  const inputUnit = String(unit || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+
+  // If catalog entry specifies a dynamic unit and weight factor, use item-specific conversion!
+  if (catalogEntry && catalogEntry.weightPerUnit && parseFloat(catalogEntry.weightPerUnit) > 0) {
+    const itemUnit = String(catalogEntry.unit || 'lbs').toLowerCase().trim();
+    const factor = parseFloat(catalogEntry.weightPerUnit);
+
+    const isMeterInput = /^(?:m|meters?)$/.test(inputUnit);
+    const isMeterItem = /^(?:m|meters?)$/.test(itemUnit);
+    const isFootInput = /^(?:ft|feet|lf)$/.test(inputUnit);
+    const isFootItem = /^(?:ft|feet|lf)$/.test(itemUnit);
+
+    if (inputUnit === itemUnit || (isMeterInput && isMeterItem) || (isFootInput && isFootItem)) {
+      return qty * factor;
+    }
+    if (isMeterInput && isFootItem) {
+      return (qty * 3.28084) * factor; // Convert meters input to feet
+    }
+    if (isFootInput && isMeterItem) {
+      return (qty / 3.28084) * factor; // Convert feet input to meters
+    }
+    return qty * factor; // default multiplier
+  }
+
+  // Global Fallback Defaults
+  const u = inputUnit.replace(/s$/g, ''); // singularize
+  if (u === 'ton' || u === 'shortton') return qty * 2000;
+  if (u === 'mt' || u === 'metricton' || u === 'tonne') return qty * 2204.62;
+  if (u === 'kg' || u === 'kilogram') return qty * 2.20462;
+  if (u === 'lb' || u === 'pound') return qty;
+  if (u === 'm' || u === 'meter') return (qty * 3.28084) * 0.668; // meter to feet fallback
   if (u === 'ft' || u === 'feet' || u === 'lf') return qty * 0.668;
   if (u === 'sqft' || u === 'sf' || u === 'm2') return qty * 4.5;
-  return qty; // fallback: treat as lbs
+  return qty;
 }
 
 const cleanName = v => String(v || '')
@@ -311,7 +342,7 @@ async function calcFromText(text, opts = {}) {
   const lines = String(text || '').split('\n').map(l => l.trim()).filter(Boolean);
   if (!lines.length) throw new Error('No text input found. Paste requirements into the text box.');
 
-  const unitPattern = '(?:tons?|tonnes?|t|lbs?|pounds?|kg|kgs?|pcs?|pieces?|sqft|sq\\s*ft|ft|feet)';
+  const unitPattern = '(?:tons?|tonnes?|t|lbs?|pounds?|kg|kgs?|pcs?|pieces?|sqft|sq\\s*ft|ft|feet|meters?|m)';
   const qtyUnitRx = new RegExp(`([0-9][0-9,]*(?:\\.[0-9]+)?)\\s*(${unitPattern})\\b`, 'gi');
 
   let rawMaterials = [], totalWeightLbs = 0, unavailable = [];
@@ -343,12 +374,13 @@ async function calcFromText(text, opts = {}) {
 
     for (const entry of entries) {
       if (!entry.qty || entry.qty <= 0) continue;
-      const weightLbs = toWeightLbs(entry.qty, entry.unit, 0);
-      if (weightLbs <= 0) continue;
 
       const catalogEntry = await resolveItem(entry.name);
+      const weightLbs = toWeightLbs(entry.qty, entry.unit, 0, catalogEntry);
+      if (weightLbs <= 0) continue;
+
       if (!catalogEntry) {
-        unavailable.push({ name: entry.name || rawLine, qty: entry.qty, unit: entry.unit });
+        unavailable.push({ name: entry.name || rawLine, qty: entry.qty, unit: entry.unit, weightLbs: weightLbs });
         continue;
       }
 
@@ -397,7 +429,7 @@ async function calcFromCsv(csvText, opts = {}) {
   if (lines.length < 2) throw new Error('CSV must have a header row and at least one data row.');
 
   const headers = parseCsvLine(lines[0]);
-  const ci = {
+  let ci = {
     item: findCol(headers, 'item'),
     qty: findCol(headers, 'quantity'),
     unit: findCol(headers, 'unit'),
@@ -406,11 +438,50 @@ async function calcFromCsv(csvText, opts = {}) {
     weightLbs: findCol(headers, 'weight_lbs'),
     weightTons: findCol(headers, 'weight_tons'),
   };
-  if (ci.qty === -1) {
-    for (let i = 0; i < headers.length; i++) {
-      if (i !== ci.item) { ci.qty = i; break; }
+
+  // If column indices are still missing, perform safe guessing based on first row analysis
+  if (lines.length > 1) {
+    const firstRowCells = parseCsvLine(lines[1]);
+    
+    // Guess item column (first text column that is non-numeric)
+    if (ci.item === -1) {
+      for (let i = 0; i < firstRowCells.length; i++) {
+        const val = firstRowCells[i].trim();
+        if (val && isNaN(parseFloat(val.replace(/,/g, '')))) {
+          ci.item = i;
+          break;
+        }
+      }
+    }
+
+    // Guess quantity column (first column containing numbers, which is not the item column)
+    if (ci.qty === -1) {
+      for (let i = 0; i < firstRowCells.length; i++) {
+        const val = firstRowCells[i].trim();
+        if (i !== ci.item && val && !isNaN(parseFloat(val.replace(/,/g, '')))) {
+          ci.qty = i;
+          break;
+        }
+      }
+    }
+
+    // Guess unit column (first text column containing standard steel units, excluding item and qty columns)
+    if (ci.unit === -1) {
+      const unitPattern = /^(?:tons?|tonnes?|t|lbs?|pounds?|kg|kgs?|pcs?|pieces?|sqft|sq\s*ft|ft|feet|meters?|m)$/i;
+      for (let i = 0; i < firstRowCells.length; i++) {
+        const val = firstRowCells[i].trim();
+        if (i !== ci.item && i !== ci.qty && unitPattern.test(val)) {
+          ci.unit = i;
+          break;
+        }
+      }
     }
   }
+
+  // Final fallback guess
+  if (ci.item === -1) ci.item = 0;
+  if (ci.qty === -1) ci.qty = 1;
+  if (ci.unit === -1) ci.unit = 2;
 
   let rawMaterials = [], totalWeightLbs = 0, unavailable = [];
 
@@ -418,11 +489,34 @@ async function calcFromCsv(csvText, opts = {}) {
     const cells = parseCsvLine(lines[i]);
     if (cells.every(c => !c)) continue;
 
-    const itemName = ci.item >= 0 ? cells[ci.item] || `Item ${i}` : `Item ${i}`;
-    const qty = parseFloat(ci.qty >= 0 ? cells[ci.qty] : 0) || 0;
-    const unit = ci.unit >= 0 ? cells[ci.unit] || 'lbs' : 'lbs';
+    const itemName = ci.item >= 0 && cells[ci.item] ? cells[ci.item].trim() : `Item ${i}`;
+    const cellVal = String(ci.qty >= 0 && cells[ci.qty] ? cells[ci.qty] : '').trim();
+    
+    let qty = 0;
+    let unit = ci.unit >= 0 && cells[ci.unit] ? String(cells[ci.unit]).trim() : 'lbs';
+
+    // Parse adjacent quantity and unit if present, e.g. "1200 lbs" or "25 tons"
+    const unitPattern = '(?:tons?|tonnes?|t|lbs?|pounds?|kg|kgs?|pcs?|pieces?|sqft|sq\\s*ft|ft|feet|meters?|m)';
+    const adjRx = new RegExp(`^([0-9][0-9,]*(?:\\.[0-9]+)?)\\s*(${unitPattern})?$`, 'i');
+    const adjMatch = cellVal.match(adjRx);
+
+    if (adjMatch) {
+      qty = parseFloat(adjMatch[1].replace(/,/g, '')) || 0;
+      if (adjMatch[2]) {
+        unit = adjMatch[2];
+      }
+    } else {
+      qty = parseFloat(cellVal.replace(/,/g, '')) || 0;
+    }
+
+    // Normalize unit
+    unit = unit.toLowerCase().replace(/\.|s$/g, '').trim();
+    if (unit === 't') unit = 'tons';
+
     const grade = ci.grade >= 0 ? cells[ci.grade] || '' : '';
     const lengthFt = parseFloat(ci.lengthFt >= 0 ? cells[ci.lengthFt] : 0) || 0;
+
+    const catalogEntry = await resolveItem(itemName);
 
     let weightLbs = 0;
     if (ci.weightLbs >= 0 && parseFloat(cells[ci.weightLbs]))
@@ -430,12 +524,14 @@ async function calcFromCsv(csvText, opts = {}) {
     else if (ci.weightTons >= 0 && parseFloat(cells[ci.weightTons]))
       weightLbs = parseFloat(cells[ci.weightTons]) * 2000;
     else
-      weightLbs = toWeightLbs(qty, unit, lengthFt);
+      weightLbs = toWeightLbs(qty, unit, lengthFt, catalogEntry);
 
     if (weightLbs <= 0) continue;
 
-    const catalogEntry = await resolveItem(itemName);
-    if (!catalogEntry) { unavailable.push({ name: itemName, qty: qty, unit: unit }); continue; }
+    if (!catalogEntry) {
+      unavailable.push({ name: itemName, qty: qty, unit: unit, weightLbs: weightLbs });
+      continue;
+    }
 
     totalWeightLbs += weightLbs;
     const pricePerLb = catalogEntry.priceLb || PRICE_BANDS[DEFAULT_BAND];
@@ -483,7 +579,7 @@ function calcFromPreset(presetEntries, opts = {}) {
     const cfg = CATALOG.find(c => c.id === entry.id);
     if (!cfg) continue;
 
-    const weightLbs = toWeightLbs(entry.qty, entry.unit, 0);
+    const weightLbs = toWeightLbs(entry.qty, entry.unit, 0, cfg);
     if (weightLbs <= 0) continue;
 
     const pricePerLb = cfg.priceLb || PRICE_BANDS[DEFAULT_BAND];
@@ -609,6 +705,7 @@ window.LocalEngine = {
   calcFromPreset,
   calcFromText,
   loadCatalog,
+  resolveItem,
   _buildQuoteObject,
   toWeightLbs,
 

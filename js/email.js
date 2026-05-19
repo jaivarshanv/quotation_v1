@@ -20,6 +20,13 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
   const taxVal = subTotalVal * 0.06;
   const totalVal = subTotalVal + taxVal;
 
+  const unavailableList = data._meta?.unavailable || [];
+  let unavailableNotice = '';
+  if (unavailableList.length > 0) {
+    const listStr = unavailableList.map(un => `${un.name} (${un.qty ? Number(un.qty).toLocaleString('en-US') + ' ' + (un.unit || 'lbs') : '—'})`).join(', ');
+    unavailableNotice = `<br><span style="font-weight: 500; color: #64748b;">Note: The following requested items were declared unavailable and not quoted: <strong style="color: #64748b; font-weight: 600;">${listStr}</strong>.</span>`;
+  }
+
   const renderRows = (moduleData) => {
     if (!moduleData || moduleData.length === 0) return '';
     return moduleData.map(row => {
@@ -29,7 +36,7 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
           <td style="padding:12px 0;border:none;color:#0f172a;font-size:13px;font-weight:500;text-align:left">${row.item}</td>
           <td style="padding:12px 0;border:none;color:#475569;font-size:12px;text-align:left">${qtyStr}</td>
           <td style="padding:12px 0;border:none;color:#475569;font-size:12px;font-family:monospace;text-align:left">${row.rate || '—'}</td>
-          <td style="padding:12px 0;border:none;color:#0f172a;font-size:13px;font-weight:500;font-family:monospace;text-align:right">$${row.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+          <td style="padding:12px 0;border:none;color:#0f172a;font-size:13px;font-weight:500;font-family:monospace;text-align:right">$${row.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         </tr>`;
     }).join('');
   };
@@ -127,15 +134,15 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
             <table cellpadding="0" cellspacing="0" border="0" style="width:280px;border-collapse:collapse;">
               <tr style="border-bottom:1px solid #f1f5f9;">
                 <td style="padding:8px 0;font-size:13px;color:#475569;text-align:left;font-weight:500;">Subtotal</td>
-                <td style="padding:8px 0;font-size:13px;font-weight:500;font-family:monospace;color:#475569;text-align:right;">$${subTotalVal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                <td style="padding:8px 0;font-size:13px;font-weight:500;font-family:monospace;color:#475569;text-align:right;">$${subTotalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
               <tr style="border-bottom:1px solid #f1f5f9;">
                 <td style="padding:8px 0;font-size:13px;color:#475569;text-align:left;font-weight:500;">Tax (6%)</td>
-                <td style="padding:8px 0;font-size:13px;font-weight:500;font-family:monospace;color:#475569;text-align:right;">$${taxVal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                <td style="padding:8px 0;font-size:13px;font-weight:500;font-family:monospace;color:#475569;text-align:right;">$${taxVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
               <tr style="border-bottom:1.5px solid #cbd5e1;">
-                <td style="padding:10px 0;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;text-align:left;color:#000000;">Amount Due (USD)</td>
-                <td style="padding:10px 0;font-size:14px;font-weight:600;font-family:monospace;color:#000000;text-align:right;">$${totalVal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                <td style="padding:10px 0;font-size:14px;font-weight:600;letter-spacing:0.5px;text-align:left;color:#000000;">Total Amount (USD)</td>
+                <td style="padding:10px 0;font-size:14px;font-weight:600;font-family:monospace;color:#000000;text-align:right;">$${totalVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
             </table>
           </td>
@@ -146,7 +153,7 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
           <td style="padding:32px;background-color:#ffffff;border-top:1px solid #cbd5e1;text-align:left;">
             <!-- Terms & Notes -->
             <div style="font-size:11px;color:#64748b;line-height:1.6;margin-bottom:0;text-align:justify;">
-              <strong style="color:#0f172a;font-weight:600;">Terms &amp; Notes:</strong> This quotation is valid for 7 days, with prices quoted FOB Shipping Point and exclusive of applicable sales tax and freight charges. Payment requires a 30% advance with the purchase order, and the remaining 70% is due prior to shipment. Final billing will be calculated based on the certified scale weight at the time of loading, subject to a standard +/- 10% weight tolerance, and a Mill Test Report (MTR) will be provided.
+              <strong style="color:#0f172a;font-weight:600;">Terms &amp; Notes:</strong> This quotation is valid for 7 days, with prices quoted FOB Shipping Point and exclusive of applicable sales tax and freight charges. Payment requires a 30% advance with the purchase order, and the remaining 70% is due prior to shipment. Final billing will be calculated based on the certified scale weight at the time of loading, subject to a standard +/- 10% weight tolerance, and a Mill Test Report (MTR) will be provided.${unavailableNotice}
             </div>
           </td>
         </tr>
