@@ -186,16 +186,6 @@ function generateEmailHTML(data, client, email, phone, address, grandTotal) {
                   Authorized electronic RFQ summary. Digitally signed &amp; verified.<br>
                   <span style="color:#94a3b8">SYS.APEX.BOM.402 // CONFIDENTIAL PORTAL DISPATCH</span>
                 </td>
-                <td align="right" valign="middle" width="50">
-                  <div style="width:42px;height:42px;border:1px solid #e2e8f0;border-radius:4px;padding:4px;background-color:#ffffff">
-                    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="3" y="3" width="7" height="7"></rect>
-                      <rect x="14" y="3" width="7" height="7"></rect>
-                      <rect x="3" y="14" width="7" height="7"></rect>
-                      <path d="M14 14h2v2h-2z M18 18h3v3h-3z M14 20h2v1h-2z M18 14h3v2h-3z"></path>
-                    </svg>
-                  </div>
-                </td>
               </tr>
             </table>
           </td>

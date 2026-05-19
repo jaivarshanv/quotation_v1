@@ -468,24 +468,76 @@ IMPORTANT: If "Erection required" is "yes", include a detailed erection/crane co
 // ── Inline alert helper ────────────────────────────────
 function showAlert(msg, type = 'warn') {
   const icons = { warn: '⚠', err: '✖', info: 'ℹ', success: '✔' };
-  let el = document.getElementById('engine-alert');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'engine-alert';
-    const btn = document.getElementById('generateBtn') || 
-                document.getElementById('generateTextBtn') || 
-                document.getElementById('generateCsvBtn') || 
-                document.getElementById('compileQuoteBtn') ||
-                document.querySelector('.container');
-    if (btn) {
-      btn.insertAdjacentElement('beforebegin', el);
-    } else {
-      document.body.appendChild(el);
-    }
+  
+  // Get or create fixed toast container
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.style.position = 'fixed';
+    container.style.top = '24px';
+    container.style.right = '24px';
+    container.style.zIndex = '10000';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '10px';
+    container.style.maxWidth = '360px';
+    container.style.width = 'calc(100% - 48px)';
   }
+
+  // Ensure it is appended to the body
+  if (!container.parentElement) {
+    document.body.appendChild(container);
+  }
+
+  const el = document.createElement('div');
   el.className = `alert alert-${type}`;
-  el.innerHTML = `<span class="alert__icon">${icons[type]}</span><div class="alert__body">${msg}</div>`;
-  setTimeout(() => { if (el) el.remove(); }, 6000);
+  el.style.margin = '0';
+  el.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.15)';
+  el.style.transition = 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+  el.style.transform = 'translateY(15px)';
+  el.style.opacity = '0';
+  
+  // High-end tailored colors matching component alerts
+  if (type === 'success') {
+    el.style.background = '#dcfce7';
+    el.style.border = '1px solid #b3ddc9';
+    el.style.color = '#15803d';
+  } else if (type === 'err') {
+    el.style.background = '#fee2e2';
+    el.style.border = '1px solid #f5b3b3';
+    el.style.color = '#b91c1c';
+  } else if (type === 'info') {
+    el.style.background = '#e0f2fe';
+    el.style.border = '1px solid #b3d4f5';
+    el.style.color = '#1d4ed8';
+  } else {
+    el.style.background = '#fef3c7';
+    el.style.border = '1px solid #e8d080';
+    el.style.color = '#b45309';
+  }
+
+  el.innerHTML = `<span class="alert__icon" style="font-size: 16px; font-weight: bold; margin-right: 2px;">${icons[type]}</span><div class="alert__body">${msg}</div>`;
+  container.appendChild(el);
+
+  // Trigger browser paint
+  el.offsetHeight;
+
+  // Animate in
+  el.style.transform = 'translateY(0)';
+  el.style.opacity = '1';
+
+  // Slide out and remove after 5 seconds
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(-15px)';
+    setTimeout(() => {
+      el.remove();
+      if (container.children.length === 0) {
+        container.remove();
+      }
+    }, 300);
+  }, 5000);
 }
 window.showAlert = showAlert;
 
