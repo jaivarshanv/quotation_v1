@@ -472,8 +472,16 @@ function showAlert(msg, type = 'warn') {
   if (!el) {
     el = document.createElement('div');
     el.id = 'engine-alert';
-    const btn = document.getElementById('generateBtn');
-    btn.insertAdjacentElement('beforebegin', el);
+    const btn = document.getElementById('generateBtn') || 
+                document.getElementById('generateTextBtn') || 
+                document.getElementById('generateCsvBtn') || 
+                document.getElementById('compileQuoteBtn') ||
+                document.querySelector('.container');
+    if (btn) {
+      btn.insertAdjacentElement('beforebegin', el);
+    } else {
+      document.body.appendChild(el);
+    }
   }
   el.className = `alert alert-${type}`;
   el.innerHTML = `<span class="alert__icon">${icons[type]}</span><div class="alert__body">${msg}</div>`;

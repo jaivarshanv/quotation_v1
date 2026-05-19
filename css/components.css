@@ -859,6 +859,20 @@ select.form-control {
   .print-row .btn { width: 100%; }
 }
 
+/* ── SCREEN-ONLY HIDING ───────────────────────────── */
+@media screen {
+  .quote-logo,
+  .corporate-address,
+  .quote-header-divider,
+  .quote-header-right,
+  .quote-footer-mark {
+    display: none !important;
+  }
+  .quote-header-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* ── PRINT ────────────────────────────────────────── */
 @media print {
   * { 
@@ -881,6 +895,19 @@ select.form-control {
   .quote-body { border: 2px solid #000 !important; border-top: none !important; }
   .line-table th { background: #eee !important; border-bottom: 1px solid #000 !important; }
   .line-table td { border-bottom: 1px solid #000 !important; }
+
+  /* Explicitly restore company and client details for PDF/Print */
+  .quote-logo,
+  .corporate-address,
+  .quote-header-divider {
+    display: block !important;
+  }
+  .quote-header-right {
+    display: flex !important;
+  }
+  .quote-footer-mark {
+    display: flex !important;
+  }
 }
 
 /* ── APEX CORPORATE QUOTATION ADDITIONS ───────────── */
