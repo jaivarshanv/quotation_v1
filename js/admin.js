@@ -183,13 +183,13 @@ window.sortBy = function(col) {
 const catalogTbody = document.getElementById("catalogTableBody");
 
 async function loadCatalogItems() {
-  catalogTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--ls-mid);">Loading catalog…</td></tr>`;
+  catalogTbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:20px; color:var(--ls-mid);">Loading catalog…</td></tr>`;
   try {
     const snap = await getDocs(collection(db, "catalog"));
     catalogTbody.innerHTML = "";
 
     if (snap.empty) {
-      catalogTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--ls-mid); padding:20px;">No items in catalog. Add one above.</td></tr>`;
+      catalogTbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--ls-mid); padding:20px;">No items in catalog. Add one above.</td></tr>`;
       return;
     }
 
@@ -200,6 +200,9 @@ async function loadCatalogItems() {
         <td title="${d.name || ''}"><strong title="${d.name || ''}">${d.name || "—"}</strong></td>
         <td>$${parseFloat(d.priceLb || 0).toFixed(3)}</td>
         <td>$${parseFloat(d.fabLb || 0).toFixed(3)}</td>
+        <td>$${parseFloat(d.labourLb || 0).toFixed(3)}</td>
+        <td>$${parseFloat(d.freightLb || 0).toFixed(3)}</td>
+        <td>${d.wastagePct !== undefined ? parseFloat(d.wastagePct) + '%' : "0%"}</td>
         <td>${d.marginPct !== undefined ? parseFloat(d.marginPct) + '%' : "—"}</td>
         <td>
           <button class="btn btn-ghost btn-sm" onclick="openItemForm('${docSnap.id}')">Edit</button>
@@ -213,7 +216,7 @@ async function loadCatalogItems() {
     if (window.LocalEngine?.loadCatalog) window.LocalEngine.loadCatalog();
   } catch (error) {
     console.error("Error loading catalog:", error);
-    catalogTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red; padding:20px;">Error: ${error.message}</td></tr>`;
+    catalogTbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red; padding:20px;">Error: ${error.message}</td></tr>`;
   }
 }
 
@@ -223,6 +226,9 @@ window.openItemForm = async function(docId = null) {
   document.getElementById("itemName").value = "";
   document.getElementById("itemPriceLb").value = "";
   document.getElementById("itemFabLb").value = "";
+  document.getElementById("itemLabourLb").value = "";
+  document.getElementById("itemFreightLb").value = "";
+  document.getElementById("itemWastagePct").value = "";
   document.getElementById("itemMarginPct").value = "";
   document.getElementById("itemMsg").style.display = "none";
 
@@ -234,6 +240,9 @@ window.openItemForm = async function(docId = null) {
         document.getElementById("itemName").value    = d.name || "";
         document.getElementById("itemPriceLb").value = d.priceLb || "";
         document.getElementById("itemFabLb").value   = d.fabLb || "";
+        document.getElementById("itemLabourLb").value = d.labourLb !== undefined ? d.labourLb : "";
+        document.getElementById("itemFreightLb").value = d.freightLb !== undefined ? d.freightLb : "";
+        document.getElementById("itemWastagePct").value = d.wastagePct !== undefined ? d.wastagePct : "";
         document.getElementById("itemMarginPct").value = d.marginPct !== undefined ? d.marginPct : "";
       }
     } catch (e) { console.error(e); }
@@ -253,12 +262,33 @@ window.saveItem = async function() {
   const name    = document.getElementById("itemName").value.trim();
   const priceLb = parseFloat(document.getElementById("itemPriceLb").value);
   const fabLb   = parseFloat(document.getElementById("itemFabLb").value);
+  const labourLbVal  = document.getElementById("itemLabourLb").value.trim();
+  const freightLbVal = document.getElementById("itemFreightLb").value.trim();
+  const wastagePctVal = document.getElementById("itemWastagePct").value.trim();
   const marginPctVal = document.getElementById("itemMarginPct").value.trim();
 
   if (!name)                        { showItemMsg("Name is required.", "error");        return; }
   if (isNaN(priceLb) || priceLb <= 0) { showItemMsg("Enter a valid Price/lb.", "error"); return; }
   if (isNaN(fabLb)   || fabLb < 0)    { showItemMsg("Enter a valid Fab/lb.", "error");   return; }
   
+  let labourLb = 0;
+  if (labourLbVal !== "") {
+    labourLb = parseFloat(labourLbVal);
+    if (isNaN(labourLb) || labourLb < 0) { showItemMsg("Enter a valid Labour/lb.", "error"); return; }
+  }
+
+  let freightLb = 0;
+  if (freightLbVal !== "") {
+    freightLb = parseFloat(freightLbVal);
+    if (isNaN(freightLb) || freightLb < 0) { showItemMsg("Enter a valid Freight/lb.", "error"); return; }
+  }
+
+  let wastagePct = 0;
+  if (wastagePctVal !== "") {
+    wastagePct = parseFloat(wastagePctVal);
+    if (isNaN(wastagePct) || wastagePct < 0) { showItemMsg("Enter a valid Wastage %.", "error"); return; }
+  }
+
   let marginPct = undefined;
   if (marginPctVal !== "") {
     marginPct = parseFloat(marginPctVal);
@@ -272,7 +302,7 @@ window.saveItem = async function() {
   const tokens = nameTag.split(/[^a-z0-9]+/).filter(Boolean);
   const tags = [...new Set([nameTag, ...tokens])];
 
-  const payload = { name, tags, priceLb, fabLb, updatedAt: new Date().toISOString() };
+  const payload = { name, tags, priceLb, fabLb, labourLb, freightLb, wastagePct, updatedAt: new Date().toISOString() };
   if (marginPct !== undefined) {
     payload.marginPct = marginPct;
   }
@@ -327,24 +357,36 @@ window.inspectQuote = function(item) {
   const mBody = document.getElementById("insMaterialsBody");
   mBody.innerHTML = "";
   
+  let totalMarginEarned = 0;
+
   if (rawMaterials.length === 0) {
-    mBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:15px; color:#8e8e93;">No itemized materials saved for this quotation.</td></tr>`;
+    mBody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:15px; color:#8e8e93;">No itemized materials saved for this quotation.</td></tr>`;
   } else {
     rawMaterials.forEach(m => {
+      // Calculate Margin Earned on this item
+      const amtVal = parseFloat(m.amount || 0);
+      const margPct = parseFloat(m.marginPct || 0);
+      const itemMargin = amtVal * (margPct / (100 + margPct));
+      totalMarginEarned += itemMargin;
+
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td style="padding:10px; border-bottom:1px solid #eee;" title="${m.itemName || ''}"><strong title="${m.itemName || ''}">${m.itemName || "—"}</strong></td>
-        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">${Math.round(m.weightLbs).toLocaleString()}</td>
-        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.basePriceLb || 0).toFixed(3)}</td>
-        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.fabLb || 0).toFixed(3)}</td>
-        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">${parseFloat(m.marginPct || 0).toFixed(0)}%</td>
-        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.loadedRate || 0).toFixed(3)}</td>
-        <td style="padding:10px; border-bottom:1px solid #eee; text-align:right; font-weight:700;">$${parseFloat(m.amount || 0).toLocaleString()}</td>
+        <td style="padding:6px 8px; border-bottom:1px solid #eee;" title="${m.itemName || ''}"><strong title="${m.itemName || ''}">${m.itemName || "—"}</strong></td>
+        <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:right;">${Math.round(m.weightLbs).toLocaleString()}</td>
+        <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.basePriceLb || 0).toFixed(3)}</td>
+        <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.fabLb || 0).toFixed(3)}</td>
+        <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.labourLb || 0).toFixed(3)}</td>
+        <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.freightLb || 0).toFixed(3)}</td>
+        <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:right;">${m.wastagePct !== undefined ? parseFloat(m.wastagePct) + '%' : "0%"}</td>
+        <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:right;">${parseFloat(m.marginPct || 0).toFixed(0)}%</td>
+        <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:right;">$${parseFloat(m.loadedRate || 0).toFixed(3)}</td>
+        <td style="padding:6px 8px; border-bottom:1px solid #eee; text-align:right; font-weight:700;">$${parseFloat(m.amount || 0).toLocaleString()}</td>
       `;
       mBody.appendChild(tr);
     });
   }
 
+  document.getElementById("insTotalMargin").textContent = totalMarginEarned > 0 ? `$${totalMarginEarned.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}` : "$0.00";
   document.getElementById("insGrandTotal").textContent = item.grandFmt;
 
   // Show inspector modal

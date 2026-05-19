@@ -136,7 +136,7 @@ function saveUnlistedItems() {
   const unlistedTbody = document.getElementById('unlistedTableBody');
   const reviewTbody = document.getElementById('reviewTableBody');
   const esc = window.esc || (s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
-  
+
   if (unlistedTbody && reviewTbody) {
     const rows = Array.from(unlistedTbody.querySelectorAll('tr'));
     rows.forEach(tr => {
@@ -150,9 +150,17 @@ function saveUnlistedItems() {
         const fabLb = parseFloat(tr.querySelector('[data-field="fabLb"]').value) || 0;
         const marginPct = parseFloat(tr.querySelector('[data-field="marginPct"]').value) || 0;
 
+        const labourLb = parseFloat(tr.querySelector('[data-field="labourLb"]').value) || 0;
+        const freightLb = parseFloat(tr.querySelector('[data-field="freightLb"]').value) || 0;
+        const wastagePct = parseFloat(tr.querySelector('[data-field="wastagePct"]').value) || 0;
+
         // Push directly as an active item to reviewTableBody!
         const newTr = document.createElement('tr');
         newTr.setAttribute('data-is-custom-unlisted', 'true');
+        newTr.setAttribute('data-labour', labourLb);
+        newTr.setAttribute('data-freight', freightLb);
+        newTr.setAttribute('data-wastage', wastagePct);
+
         newTr.innerHTML = `
           <td style="text-align: center; vertical-align: middle;">
             <input type="checkbox" class="review-checkbox" data-type="matched" checked style="transform: scale(1.1); cursor: pointer;" />
@@ -177,7 +185,7 @@ function saveUnlistedItems() {
           </td>
         `;
         reviewTbody.appendChild(newTr);
-        
+
         // Remove row from unavailable/unlisted list so it isn't listed twice
         tr.remove();
       }
@@ -240,6 +248,10 @@ function renderCostingReview(quote) {
   // Render Matched Catalog Items
   matched.forEach((m, idx) => {
     const tr = document.createElement('tr');
+    tr.setAttribute('data-labour', m.labourLb || 0);
+    tr.setAttribute('data-freight', m.freightLb || 0);
+    tr.setAttribute('data-wastage', m.wastagePct || 0);
+
     tr.innerHTML = `
       <td style="text-align: center; vertical-align: middle;">
         <input type="checkbox" checked class="review-checkbox" data-type="matched" data-index="${idx}" style="transform: scale(1.1); cursor: pointer;" />
@@ -270,12 +282,17 @@ function renderCostingReview(quote) {
   if (unlistedTbody) {
     unavailable.forEach((un, idx) => {
       const tr = document.createElement('tr');
+      tr.setAttribute('data-labour', 0);
+      tr.setAttribute('data-freight', 0);
+      tr.setAttribute('data-wastage', 0);
+
       tr.innerHTML = `
         <td style="text-align: center; vertical-align: middle;">
-          <input type="checkbox" class="review-checkbox" data-type="unavailable" data-index="${idx}" style="transform: scale(1.1); cursor: pointer;" />
+          <input type="checkbox" class="review-checkbox" data-type="unavailable" data-index="${idx}" onchange="window.updateUnlistedCountBadge()" style="transform: scale(1.1); cursor: pointer;" />
         </td>
         <td title="${esc(un.name || '')}">
-          <input type="text" class="review-input" value="${esc(un.name || '')}" title="${esc(un.name || '')}" data-field="name" data-type="unavailable" data-index="${idx}" />
+          <input type="text" class="review-input" value="${esc(un.name || '')}" title="${esc(un.name || '')}" data-field="name" data-type="unavailable" data-index="${idx}" oninput="window.suggestUnlistedMatch(this)" />
+          <div class="match-suggest-box" style="font-size: 11px; margin-top: 4px; display: none; text-align: left; padding-left: 4px;"></div>
         </td>
         <td title="${un.qty || 0}">
           <input type="number" step="any" class="review-input" value="${un.qty || 0}" title="${un.qty || 0}" data-field="qty" data-type="unavailable" data-index="${idx}" />
@@ -289,11 +306,24 @@ function renderCostingReview(quote) {
         <td title="Fabrication Cost per lb">
           <input type="number" step="any" class="review-input" placeholder="e.g. 0.10" title="Fabrication Cost per lb" data-field="fabLb" data-type="unavailable" data-index="${idx}" />
         </td>
+        <td title="Labour Cost per lb">
+          <input type="number" step="any" class="review-input" placeholder="e.g. 0.05" title="Labour Cost per lb" data-field="labourLb" data-type="unavailable" data-index="${idx}" />
+        </td>
+        <td title="Freight Cost per lb">
+          <input type="number" step="any" class="review-input" placeholder="e.g. 0.03" title="Freight Cost per lb" data-field="freightLb" data-type="unavailable" data-index="${idx}" />
+        </td>
+        <td title="Wastage %">
+          <input type="number" step="any" class="review-input" placeholder="e.g. 5" title="Wastage %" data-field="wastagePct" data-type="unavailable" data-index="${idx}" />
+        </td>
         <td title="Margin %">
           <input type="number" step="any" class="review-input" placeholder="e.g. 10" title="Margin %" data-field="marginPct" data-type="unavailable" data-index="${idx}" />
         </td>
       `;
       unlistedTbody.appendChild(tr);
+
+      // Trigger fuzzy match check immediately on load
+      const nameInput = tr.querySelector('[data-field="name"]');
+      if (nameInput) window.suggestUnlistedMatch(nameInput);
     });
   }
 
@@ -344,10 +374,14 @@ function compileFinalQuotation() {
       const fabLb = parseFloat(tr.querySelector('[data-field="fabLb"]').value) || 0;
       const marginPct = parseFloat(tr.querySelector('[data-field="marginPct"]').value) || 0;
 
+      const labourLb = parseFloat(tr.getAttribute('data-labour')) || 0;
+      const freightLb = parseFloat(tr.getAttribute('data-freight')) || 0;
+      const wastagePct = parseFloat(tr.getAttribute('data-wastage')) || 0;
+
       const weightLbs = window.LocalEngine.toWeightLbs(qty, unit, 0);
       newTotalWeightLbs += weightLbs;
 
-      const loadedRate = (basePriceLb + fabLb) * (1 + marginPct / 100);
+      const loadedRate = ((basePriceLb * (1 + wastagePct / 100)) + fabLb + labourLb + freightLb) * (1 + marginPct / 100);
       const lineTotal = weightLbs * loadedRate;
 
       const isCustom = tr.getAttribute('data-is-custom-unlisted') === 'true';
@@ -360,6 +394,9 @@ function compileFinalQuotation() {
             grade: 'ASTM Grade Steel',
             priceLb: basePriceLb,
             fabLb: fabLb,
+            labourLb: labourLb,
+            freightLb: freightLb,
+            wastagePct: wastagePct,
             marginPct: marginPct
           });
         }
@@ -372,6 +409,9 @@ function compileFinalQuotation() {
         weightLbs,
         basePriceLb,
         fabLb,
+        labourLb,
+        freightLb,
+        wastagePct,
         marginPct,
         loadedRate,
         amount: Math.round(lineTotal),
@@ -392,6 +432,10 @@ function compileFinalQuotation() {
       const fabLb = parseFloat(tr.querySelector('[data-field="fabLb"]').value);
       const marginPct = parseFloat(tr.querySelector('[data-field="marginPct"]').value);
 
+      const labourLb = parseFloat(tr.querySelector('[data-field="labourLb"]').value) || 0;
+      const freightLb = parseFloat(tr.querySelector('[data-field="freightLb"]').value) || 0;
+      const wastagePct = parseFloat(tr.querySelector('[data-field="wastagePct"]').value) || 0;
+
       if (isNaN(basePriceLb) || isNaN(fabLb) || isNaN(marginPct)) {
         showAlert(`Please enter a valid Rate, Fab charge, and Margin % for custom item "${nameVal}".`, 'warn');
         throw new Error('Missing custom item pricing specifications.');
@@ -400,7 +444,7 @@ function compileFinalQuotation() {
       const weightLbs = window.LocalEngine.toWeightLbs(qtyVal, unitVal, 0);
       newTotalWeightLbs += weightLbs;
 
-      const loadedRate = (basePriceLb + fabLb) * (1 + marginPct / 100);
+      const loadedRate = ((basePriceLb * (1 + wastagePct / 100)) + fabLb + labourLb + freightLb) * (1 + marginPct / 100);
       const lineTotal = weightLbs * loadedRate;
 
       // Automatically seed new custom item into Firestore Catalog for future runs!
@@ -410,6 +454,9 @@ function compileFinalQuotation() {
           grade: 'ASTM Grade Steel',
           priceLb: basePriceLb,
           fabLb: fabLb,
+          labourLb: labourLb,
+          freightLb: freightLb,
+          wastagePct: wastagePct,
           marginPct: marginPct
         });
       }
@@ -421,6 +468,9 @@ function compileFinalQuotation() {
         weightLbs,
         basePriceLb,
         fabLb,
+        labourLb,
+        freightLb,
+        wastagePct,
         marginPct,
         loadedRate,
         amount: Math.round(lineTotal),
@@ -643,3 +693,156 @@ function showUnavailableItems(items) {
   document.body.appendChild(overlay);
 }
 window.showUnavailableItems = showUnavailableItems;
+
+// ── Unavailable Item Matching & Autocomplete suggestions ──────
+window.suggestUnlistedMatch = function (inputEl) {
+  const val = inputEl.value.trim();
+  const tr = inputEl.closest('tr');
+  const suggestDiv = tr.querySelector('.match-suggest-box');
+  if (!suggestDiv) return;
+
+  if (!window.LocalEngine || !window.LocalEngine.CATALOG) {
+    suggestDiv.style.display = 'none';
+    return;
+  }
+
+  const catalog = window.LocalEngine.CATALOG;
+  const valLower = val.toLowerCase();
+
+  // Find all items that have some token matching, sorted by score
+  const tokens = valLower.split(/\s+/).filter(t => t.length > 1);
+  let matches = [];
+
+  catalog.forEach((item, catIdx) => {
+    const nameLower = item.name.toLowerCase();
+
+    // Exact match has highest score
+    if (nameLower === valLower) {
+      matches.push({ item, catIdx, score: 9999 });
+      return;
+    }
+
+    let score = 0;
+    // Words starting with tokens
+    tokens.forEach(token => {
+      if (nameLower.includes(token)) {
+        score += token.length;
+        if (nameLower.startsWith(token)) score += 5; // Prefix bonus
+      }
+    });
+
+    if (score > 1) {
+      matches.push({ item, catIdx, score });
+    }
+  });
+
+  // Sort matches by score descending, then by name alphabetically
+  matches.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.item.name.localeCompare(b.item.name);
+  });
+
+  const topMatches = matches.slice(0, 15);
+  const esc = window.esc || (s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'));
+
+  if (topMatches.length > 0) {
+    let html = `<select class="review-input" style="font-size:11px; padding:2px 4px; width:100%; border:1px solid #0071e3; border-radius:4px; background-color:#f5faff; color:#0071e3; cursor:pointer;" onchange="window.handleUnlistedSelectChange(this)">`;
+    html += `<option value="">Select catalog match...</option>`;
+    topMatches.forEach(m => {
+      html += `<option value="${m.catIdx}">${esc(m.item.name)}</option>`;
+    });
+    // Add spacer and allow choosing all items too
+    html += `<option disabled>──────────</option>`;
+    catalog.forEach((item, catIdx) => {
+      // Don't duplicate if already in top matches
+      if (!topMatches.some(tm => tm.catIdx === catIdx)) {
+        html += `<option value="${catIdx}">${esc(item.name)}</option>`;
+      }
+    });
+    html += `</select>`;
+    suggestDiv.innerHTML = html;
+    suggestDiv.style.display = 'block';
+  } else {
+    // Dropdown showing all catalog items
+    let html = `<select class="review-input" style="font-size:11px; padding:2px 4px; width:100%; border:1px solid #ccc; border-radius:4px; background-color:#fff; color:#444; cursor:pointer;" onchange="window.handleUnlistedSelectChange(this)">`;
+    html += `<option value="">🔍 Match with catalog item...</option>`;
+    catalog.forEach((item, catIdx) => {
+      html += `<option value="${catIdx}">${esc(item.name)}</option>`;
+    });
+    html += `</select>`;
+    suggestDiv.innerHTML = html;
+    suggestDiv.style.display = 'block';
+  }
+};
+
+window.handleUnlistedSelectChange = function (selectEl) {
+  const catalogIdxVal = selectEl.value;
+  if (catalogIdxVal === "") return;
+
+  const catalogIndex = parseInt(catalogIdxVal);
+  window.applyCatalogMatch(selectEl, catalogIndex);
+
+  // Reset select to top option
+  selectEl.value = "";
+};
+
+window.applyCatalogMatch = function (suggestSpan, catalogIndex) {
+  const catalog = window.LocalEngine.CATALOG;
+  const item = catalog[catalogIndex];
+  if (!item) return;
+
+  const tr = suggestSpan.closest('tr');
+
+  // 1. Fill Name
+  const nameInput = tr.querySelector('[data-field="name"]');
+  if (nameInput) nameInput.value = item.name;
+
+  // 2. Fill Pricing
+  const priceInput = tr.querySelector('[data-field="basePriceLb"]');
+  if (priceInput) priceInput.value = item.priceLb || '';
+
+  // 3. Fill Fabrication
+  const fabInput = tr.querySelector('[data-field="fabLb"]');
+  if (fabInput) fabInput.value = item.fabLb || '0';
+
+  // 4. Fill Margin
+  const marginInput = tr.querySelector('[data-field="marginPct"]');
+  if (marginInput) marginInput.value = item.marginPct !== undefined ? item.marginPct : '25';
+
+  // 5. Fill Labour, Freight, and Wastage inputs
+  const labourInput = tr.querySelector('[data-field="labourLb"]');
+  if (labourInput) labourInput.value = item.labourLb !== undefined ? item.labourLb : '0';
+
+  const freightInput = tr.querySelector('[data-field="freightLb"]');
+  if (freightInput) freightInput.value = item.freightLb !== undefined ? item.freightLb : '0';
+
+  const wastageInput = tr.querySelector('[data-field="wastagePct"]');
+  if (wastageInput) wastageInput.value = item.wastagePct !== undefined ? item.wastagePct : '0';
+
+  // Set data attributes for compatibility
+  tr.setAttribute('data-labour', item.labourLb || 0);
+  tr.setAttribute('data-freight', item.freightLb || 0);
+  tr.setAttribute('data-wastage', item.wastagePct || 0);
+
+  // 6. Check the checkbox automatically
+  const checkbox = tr.querySelector('.review-checkbox');
+  if (checkbox) checkbox.checked = true;
+
+  // 7. Hide suggestion box
+  const suggestDiv = tr.querySelector('.match-suggest-box');
+  if (suggestDiv) suggestDiv.style.display = 'none';
+
+  // 8. Update selected count badge
+  if (window.updateUnlistedCountBadge) window.updateUnlistedCountBadge();
+};
+
+window.updateUnlistedCountBadge = function () {
+  const unlistedTbody = document.getElementById('unlistedTableBody');
+  const badge = document.getElementById('unlistedCountBadge');
+  if (unlistedTbody && badge) {
+    const total = unlistedTbody.querySelectorAll('tr').length;
+    const checked = unlistedTbody.querySelectorAll('.review-checkbox:checked').length;
+    badge.setAttribute('data-total', total);
+    badge.textContent = `${checked} / ${total} selected`;
+  }
+};

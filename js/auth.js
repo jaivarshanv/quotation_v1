@@ -119,6 +119,15 @@ function updateNavbarUI() {
   container.id = "authNavContainer";
   container.style.cssText = "display:flex; gap:12px; align-items:center; margin-left:auto;";
 
+  const path = window.location.pathname;
+  if (!path.endsWith("index.html") && !path.endsWith("/") && path !== "") {
+    const backBtn = document.createElement("a");
+    backBtn.href = "index.html";
+    backBtn.className = "btn btn-ghost btn-sm";
+    backBtn.textContent = "← Back to Quote";
+    container.appendChild(backBtn);
+  }
+
   if (currentUser) {
     // Name label
     const nameEl = document.createElement("span");

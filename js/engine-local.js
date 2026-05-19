@@ -355,8 +355,13 @@ async function calcFromText(text, opts = {}) {
       totalWeightLbs += weightLbs;
       const pricePerLb = catalogEntry.priceLb || PRICE_BANDS[DEFAULT_BAND];
       const fabPerLb = catalogEntry.fabLb || 0;
+      const labourPerLb = catalogEntry.labourLb || 0;
+      const freightPerLb = catalogEntry.freightLb || 0;
+      const wastagePct = catalogEntry.wastagePct || 0;
       const marginPct = catalogEntry.marginPct !== undefined ? catalogEntry.marginPct : (CONTINGENCY_PCT * 100);
-      const loadedRate = (pricePerLb + fabPerLb) * (1 + marginPct / 100);
+
+      const materialCost = (pricePerLb * (1 + wastagePct / 100)) + fabPerLb + labourPerLb + freightPerLb;
+      const loadedRate = materialCost * (1 + marginPct / 100);
       const lineTotal = weightLbs * loadedRate;
 
       rawMaterials.push({
@@ -366,6 +371,9 @@ async function calcFromText(text, opts = {}) {
         weightLbs: weightLbs,
         basePriceLb: pricePerLb,
         fabLb: fabPerLb,
+        labourLb: labourPerLb,
+        freightLb: freightPerLb,
+        wastagePct: wastagePct,
         marginPct: marginPct,
         loadedRate: loadedRate,
         amount: Math.round(lineTotal)
@@ -432,8 +440,13 @@ async function calcFromCsv(csvText, opts = {}) {
     totalWeightLbs += weightLbs;
     const pricePerLb = catalogEntry.priceLb || PRICE_BANDS[DEFAULT_BAND];
     const fabPerLb = catalogEntry.fabLb || 0;
+    const labourPerLb = catalogEntry.labourLb || 0;
+    const freightPerLb = catalogEntry.freightLb || 0;
+    const wastagePct = catalogEntry.wastagePct || 0;
     const marginPct = catalogEntry.marginPct !== undefined ? catalogEntry.marginPct : (CONTINGENCY_PCT * 100);
-    const loadedRate = (pricePerLb + fabPerLb) * (1 + marginPct / 100);
+
+    const materialCost = (pricePerLb * (1 + wastagePct / 100)) + fabPerLb + labourPerLb + freightPerLb;
+    const loadedRate = materialCost * (1 + marginPct / 100);
     const lineTotal = weightLbs * loadedRate;
 
     rawMaterials.push({
@@ -443,6 +456,9 @@ async function calcFromCsv(csvText, opts = {}) {
       weightLbs: weightLbs,
       basePriceLb: pricePerLb,
       fabLb: fabPerLb,
+      labourLb: labourPerLb,
+      freightLb: freightPerLb,
+      wastagePct: wastagePct,
       marginPct: marginPct,
       loadedRate: loadedRate,
       amount: Math.round(lineTotal)
@@ -472,8 +488,13 @@ function calcFromPreset(presetEntries, opts = {}) {
 
     const pricePerLb = cfg.priceLb || PRICE_BANDS[DEFAULT_BAND];
     const fabPerLb = cfg.fabLb || 0;
+    const labourPerLb = cfg.labourLb || 0;
+    const freightPerLb = cfg.freightLb || 0;
+    const wastagePct = cfg.wastagePct || 0;
     const marginPct = cfg.marginPct !== undefined ? cfg.marginPct : (CONTINGENCY_PCT * 100);
-    const loadedRate = (pricePerLb + fabPerLb) * (1 + marginPct / 100);
+
+    const materialCost = (pricePerLb * (1 + wastagePct / 100)) + fabPerLb + labourPerLb + freightPerLb;
+    const loadedRate = materialCost * (1 + marginPct / 100);
     const lineTotal = weightLbs * loadedRate;
 
     totalWeightLbs += weightLbs;
@@ -484,6 +505,9 @@ function calcFromPreset(presetEntries, opts = {}) {
       weightLbs: weightLbs,
       basePriceLb: pricePerLb,
       fabLb: fabPerLb,
+      labourLb: labourPerLb,
+      freightLb: freightPerLb,
+      wastagePct: wastagePct,
       marginPct: marginPct,
       loadedRate: loadedRate,
       amount: Math.round(lineTotal)
@@ -509,7 +533,7 @@ function _buildQuoteObject(rawMaterials, totalWeightLbs, erection, buildType, so
       rate: `$${m.loadedRate.toFixed(3)} / lb`,
       rateVal: m.loadedRate,
       amount: m.amount,
-      note: `Base: $${m.basePriceLb.toFixed(3)}/lb, Fab: $${m.fabLb.toFixed(3)}/lb, Margin: ${m.marginPct}%`
+      note: `Base: $${m.basePriceLb.toFixed(3)}/lb, Fab: $${m.fabLb.toFixed(3)}/lb, Labour: $${(m.labourLb || 0).toFixed(3)}/lb, Freight: $${(m.freightLb || 0).toFixed(3)}/lb, Wastage: ${(m.wastagePct || 0)}%, Margin: ${m.marginPct}%`
     });
   });
 
@@ -531,7 +555,7 @@ function _buildQuoteObject(rawMaterials, totalWeightLbs, erection, buildType, so
   let totalBaseCost = 0;
   let totalMarginCost = 0;
   rawMaterials.forEach(m => {
-    const base = m.weightLbs * (m.basePriceLb + m.fabLb);
+    const base = m.weightLbs * ((m.basePriceLb * (1 + (m.wastagePct || 0) / 100)) + m.fabLb + (m.labourLb || 0) + (m.freightLb || 0));
     const margin = base * (m.marginPct / 100);
     totalBaseCost += base;
     totalMarginCost += margin;

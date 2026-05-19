@@ -120,13 +120,16 @@
                 <th>Name</th>
                 <th>Price/lb</th>
                 <th>Fab/lb</th>
+                <th>Labour/lb</th>
+                <th>Freight/lb</th>
+                <th>Wastage %</th>
                 <th>Margin %</th>
                 <th></th>
               </tr>
             </thead>
             <tbody id="catalogTableBody">
               <tr>
-                <td colspan="6" style="text-align:center; padding:20px; color:var(--ls-mid);">
+                <td colspan="9" style="text-align:center; padding:20px; color:var(--ls-mid);">
                   Loading catalog…
                 </td>
               </tr>
@@ -190,9 +193,25 @@
         <input class="form-control" type="number" step="0.001" id="itemFabLb" placeholder="0.12" />
       </div>
     </div>
-    <div class="form-group" style="margin-bottom:16px;">
-      <label class="form-label">Margin %</label>
-      <input class="form-control" type="number" step="1" id="itemMarginPct" placeholder="25" />
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">Labour/lb ($)</label>
+        <input class="form-control" type="number" step="0.001" id="itemLabourLb" placeholder="0.05" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Freight/lb ($)</label>
+        <input class="form-control" type="number" step="0.001" id="itemFreightLb" placeholder="0.03" />
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">Wastage %</label>
+        <input class="form-control" type="number" step="0.1" id="itemWastagePct" placeholder="5" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Margin %</label>
+        <input class="form-control" type="number" step="1" id="itemMarginPct" placeholder="25" />
+      </div>
     </div>
     <div style="display:flex; gap:10px; margin-top:24px;">
       <button class="btn btn-primary" onclick="saveItem()">Save Item</button>
@@ -203,43 +222,46 @@
 
   <!-- Detailed Quote Inspector Modal -->
   <div id="inspectorOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:10000; backdrop-filter:blur(4px);" onclick="closeInspector()"></div>
-  <div id="inspectorModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:16px; padding:28px; width:min(720px,92vw); z-index:10001; box-shadow:0 12px 50px rgba(0,0,0,.3); max-height:85vh; overflow-y:auto; color:#1d1d1f;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:12px;">
+  <div id="inspectorModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:16px; padding:20px; width:min(1120px,96vw); z-index:10001; box-shadow:0 12px 50px rgba(0,0,0,.3); max-height:94vh; overflow-y:auto; color:#1d1d1f;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px;">
       <div style="font-size:18px; font-weight:700;" id="insTitle">Quotation Details</div>
       <button class="btn btn-ghost" style="padding:4px 8px; font-size:18px;" onclick="closeInspector()">✕</button>
     </div>
     
-    <div class="quote-meta-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; background:#f5f5f7; padding:16px; border-radius:8px; font-size:13px;">
+    <div class="quote-meta-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:16px; margin-bottom:16px; background:#f5f5f7; padding:12px 16px; border-radius:8px; font-size:12px;">
       <div>
-        <div style="font-size:11px; color:#6e6e73; text-transform:uppercase; font-weight:600; letter-spacing:0.5px;">Client / Company</div>
+        <div style="font-size:10px; color:#6e6e73; text-transform:uppercase; font-weight:600; letter-spacing:0.5px;">Client / Company</div>
         <div style="font-weight:700; margin-top:2px;" id="insClientName">—</div>
       </div>
       <div>
-        <div style="font-size:11px; color:#6e6e73; text-transform:uppercase; font-weight:600; letter-spacing:0.5px;">Email Address</div>
+        <div style="font-size:10px; color:#6e6e73; text-transform:uppercase; font-weight:600; letter-spacing:0.5px;">Email Address</div>
         <div style="font-weight:700; margin-top:2px;" id="insClientEmail">—</div>
       </div>
       <div>
-        <div style="font-size:11px; color:#6e6e73; text-transform:uppercase; font-weight:600; letter-spacing:0.5px;">Mobile Number</div>
+        <div style="font-size:10px; color:#6e6e73; text-transform:uppercase; font-weight:600; letter-spacing:0.5px;">Mobile Number</div>
         <div style="font-weight:700; margin-top:2px;" id="insClientPhone">—</div>
       </div>
       <div>
-        <div style="font-size:11px; color:#6e6e73; text-transform:uppercase; font-weight:600; letter-spacing:0.5px;">Delivery Address</div>
+        <div style="font-size:10px; color:#6e6e73; text-transform:uppercase; font-weight:600; letter-spacing:0.5px;">Delivery Address</div>
         <div style="font-weight:700; margin-top:2px;" id="insClientAddress">—</div>
       </div>
     </div>
 
-    <div style="font-weight:700; font-size:14px; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.5px; color:#6e6e73;">Itemized Material Breakdown</div>
-    <div style="overflow-x:auto; border:1px solid #e5e5ea; border-radius:8px; margin-bottom:20px;">
-      <table class="line-table" style="width:100%; border-collapse:collapse; font-size:13px;">
+    <div style="font-weight:700; font-size:13px; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.5px; color:#6e6e73;">Itemized Material Breakdown</div>
+    <div style="overflow-x:auto; border:1px solid #e5e5ea; border-radius:8px; margin-bottom:12px;">
+      <table class="line-table" style="width:100%; border-collapse:collapse; font-size:12px;">
         <thead>
           <tr style="background:#f5f5f7; border-bottom:1px solid #e5e5ea;">
-            <th style="padding:10px; text-align:left;">Material Item</th>
-            <th style="padding:10px; text-align:right;">Weight (lbs)</th>
-            <th style="padding:10px; text-align:right;">Base Price/lb</th>
-            <th style="padding:10px; text-align:right;">Fab/lb</th>
-            <th style="padding:10px; text-align:right;">Margin %</th>
-            <th style="padding:10px; text-align:right;">Loaded Rate</th>
-            <th style="padding:10px; text-align:right;">Total Amount</th>
+            <th style="padding:6px 8px; text-align:left;">Material Item</th>
+            <th style="padding:6px 8px; text-align:right;">Weight (lbs)</th>
+            <th style="padding:6px 8px; text-align:right;">Base Price/lb</th>
+            <th style="padding:6px 8px; text-align:right;">Fab/lb</th>
+            <th style="padding:6px 8px; text-align:right;">Labour/lb</th>
+            <th style="padding:6px 8px; text-align:right;">Freight/lb</th>
+            <th style="padding:6px 8px; text-align:right;">Wastage %</th>
+            <th style="padding:6px 8px; text-align:right;">Margin %</th>
+            <th style="padding:6px 8px; text-align:right;">Loaded Rate</th>
+            <th style="padding:6px 8px; text-align:right;">Total Amount</th>
           </tr>
         </thead>
         <tbody id="insMaterialsBody">
@@ -248,7 +270,11 @@
       </table>
     </div>
 
-    <div style="display:flex; justify-content:flex-end; gap:20px; align-items:center; border-top:1px solid #eee; padding-top:16px;">
+    <div style="display:flex; flex-direction:column; align-items:flex-end; border-top:1px solid #eee; padding-top:16px;">
+      <div style="margin-bottom:8px;">
+        <span style="color:#6e6e73; font-size:13px;">Total Margin Earned:</span>
+        <span style="font-size:16px; font-weight:600; margin-left:8px; color:#16a34a;" id="insTotalMargin">$0.00</span>
+      </div>
       <div>
         <span style="color:#6e6e73; font-size:13px;">Grand Total (Loaded):</span>
         <span style="font-size:20px; font-weight:700; margin-left:8px; color:#1d1d1f;" id="insGrandTotal">$0.00</span>
