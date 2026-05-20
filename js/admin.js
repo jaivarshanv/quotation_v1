@@ -400,6 +400,8 @@ window.inspectQuote = function(item) {
   const meta = qd._meta || {};
   const rawMaterials = meta.rawMaterials || [];
 
+  const fmtMoney = (val) => `$${Number(val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
   // Populate B2B client info
   document.getElementById("insClientName").textContent = fd.clientName || qd.clientName || fd.userName || "—";
   document.getElementById("insClientEmail").textContent = fd.clientEmail || qd.clientEmail || "—";
@@ -441,8 +443,15 @@ window.inspectQuote = function(item) {
     });
   }
 
-  document.getElementById("insTotalMargin").textContent = totalMarginEarned > 0 ? `$${totalMarginEarned.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}` : "$0.00";
-  document.getElementById("insGrandTotal").textContent = item.grandFmt;
+  const subtotalFromRows = rawMaterials.reduce((sum, m) => sum + parseFloat(m.amount || 0), 0);
+  const subtotal = parseFloat(qd.subtotal || qd.subTotal || subtotalFromRows || 0);
+  const tax = parseFloat(qd.tax || qd.taxAmount || (subtotal * 0.06));
+  const grandTotal = parseFloat(qd.grandTotal || qd.total || qd.finalTotal || (subtotal + tax));
+
+  document.getElementById("insSubtotal").textContent = fmtMoney(subtotal);
+  document.getElementById("insTax").textContent = fmtMoney(tax);
+  document.getElementById("insGrandTotal").textContent = fmtMoney(grandTotal);
+  document.getElementById("insTotalMargin").textContent = totalMarginEarned > 0 ? fmtMoney(totalMarginEarned) : "$0.00";
 
   // Show inspector modal
   document.getElementById("inspectorOverlay").style.display = "block";

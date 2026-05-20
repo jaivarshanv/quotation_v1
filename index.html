@@ -184,13 +184,18 @@
               <label class="form-label" title="Required field">Email <span
                   style="color:#ef4444; font-weight:bold;">*</span></label>
               <input class="form-control" type="email" id="clientEmail" placeholder="example@email.com"
-                title="This field is required" required />
+                title="Please enter a valid email address (e.g. name@domain.com)" 
+                pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required />
             </div>
             <div class="form-group">
               <label class="form-label" title="Required field">Contact <span
                   style="color:#ef4444; font-weight:bold;">*</span></label>
-              <input class="form-control" type="tel" id="clientPhone" placeholder="e.g. +1 (555) 019-2834"
-                title="This field is required" required />
+              <input class="form-control" type="tel" id="clientPhone" placeholder="e.g. +1 (555) 019-2834 or +91 98765 43210"
+                title="Accepted: India (+91 XXXXXXXXXX), USA/Canada (+1 XXXXXXXXXX), or 10-digit local number"
+                autocomplete="tel"
+                oninput="validatePhone(this)"
+                required />
+              <span id="phoneError" style="display:none; color:#ef4444; font-size:12px; margin-top:4px;">&#9888; Only India (+91), USA (+1), or Canada (+1) numbers accepted. E.g. +91 98765 43210 or +1 (555) 019-2834</span>
             </div>
             <div class="form-group">
               <label class="form-label" title="Required field">Address <span
@@ -529,7 +534,7 @@
 
       <!-- Action buttons (hidden during print) -->
       <div class="print-row" style="margin-top: 32px; display: flex; gap: 12px; justify-content: center;">
-        <button class="btn btn-secondary btn-sm" onclick="window.print()">Print Quote</button>
+        <button class="btn btn-secondary btn-sm" id="downloadPdfBtn" onclick="downloadPDF()">Download PDF</button>
         <button class="btn btn-ghost btn-sm" id="emailBtn" onclick="sendEmail()">Send via Email</button>
         <button class="btn btn-primary btn-sm" onclick="resetTool()">New Quote</button>
       </div>
@@ -545,6 +550,9 @@
   </footer>
 
   <!-- ── SCRIPTS (load order matters) ─────────────────── -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="js/logo.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/loader.js"></script>
   <script src="js/quote.js"></script>
@@ -553,6 +561,78 @@
   <script src="js/engine.js"></script>
   <script type="module" src="js/auth.js"></script>
   <script type="module" src="js/sync.js"></script>
-</body>
 
+  <script>
+    // ── Phone Validation ─────────────────────────────────
+    // Supported countries: India (+91), USA (+1), Canada (+1)
+    //
+    // India  (+91): 10 digits, starts with 6–9
+    //               e.g. +91 98765 43210
+    // USA/CA  (+1): 10 digits, area code 200–999 (no 0/1 start),
+    //               exchange 200–999 (no 0/1 start)
+    //               e.g. +1 (555) 019-2834
+    // Local (no cc): treated as US/CA 10-digit or India 10-digit
+
+    function validatePhone(input) {
+      const raw   = input.value.trim();
+      const error = document.getElementById('phoneError');
+
+      if (raw === '') {
+        if (error) error.style.display = 'none';
+        input.setCustomValidity('');
+        return;
+      }
+
+      // Strip all formatting to pure digits (keep leading + separately)
+      const hasPlus    = raw.startsWith('+');
+      const digitsOnly = raw.replace(/\D/g, '');
+
+      let valid = false;
+      let hint  = '';
+
+      if (hasPlus) {
+        if (digitsOnly.startsWith('91')) {
+          // India: +91 followed by exactly 10 digits starting with 6-9
+          const local = digitsOnly.slice(2);
+          valid = local.length === 10 && /^[6-9]\d{9}$/.test(local);
+          hint  = 'India: +91 followed by 10 digits starting with 6–9 (e.g. +91 98765 43210)';
+        } else if (digitsOnly.startsWith('1')) {
+          // USA / Canada: +1 followed by exactly 10 digits, NXX-NXX-XXXX
+          const local = digitsOnly.slice(1);
+          valid = local.length === 10 && /^[2-9]\d{2}[2-9]\d{6}$/.test(local);
+          hint  = 'US/Canada: +1 followed by 10 digits, area code 200–999 (e.g. +1 555 019-2834)';
+        } else {
+          hint = 'Only India (+91), USA (+1), or Canada (+1) numbers are accepted.';
+        }
+      } else {
+        // No country code — accept 10-digit India or US/CA local format
+        if (digitsOnly.length === 10) {
+          const isIndia  = /^[6-9]\d{9}$/.test(digitsOnly);
+          const isUSCA   = /^[2-9]\d{2}[2-9]\d{6}$/.test(digitsOnly);
+          valid = isIndia || isUSCA;
+          hint  = 'Enter a 10-digit number (India: starts 6–9; US/CA: area code 200–999) or include country code +91 / +1.';
+        } else {
+          hint = 'Enter a 10-digit local number or include country code (+91 or +1).';
+        }
+      }
+
+      if (error) error.style.display = valid ? 'none' : 'block';
+      input.setCustomValidity(valid ? '' : hint);
+    }
+
+    // Re-validate phone on generateQuote before submission
+    const _origGenQuote = window.generateQuote;
+    window.generateQuote = function() {
+      const phoneInput = document.getElementById('clientPhone');
+      if (phoneInput) {
+        validatePhone(phoneInput);
+        if (!phoneInput.checkValidity()) {
+          phoneInput.reportValidity();
+          return;
+        }
+      }
+      if (typeof _origGenQuote === 'function') _origGenQuote.apply(this, arguments);
+    };
+  </script>
+</body>
 </html>
