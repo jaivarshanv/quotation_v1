@@ -108,6 +108,7 @@ function renderQuote(data) {
   
   let tMaterials = 0;
   let tErect = 0;
+  let sNo = 1;
 
   // Render Materials
   (data.module2 || []).forEach(r => {
@@ -115,6 +116,7 @@ function renderQuote(data) {
     const tr = document.createElement('tr');
     tr.style.borderBottom = '1px solid #f1f5f9';
     tr.innerHTML = `
+      <td style="padding: 12px 0; border: none; text-align: left; color: #475569; font-weight: 500;">${sNo++}</td>
       <td style="padding: 12px 0; border: none; text-align: left;" title="${r.item || ''}"><span title="${r.item || ''}" style="color: #0f172a; font-weight: 500;">${r.item || ''}</span></td>
       <td style="padding: 12px 0; border: none; text-align: left; color: #475569;">${r.qty ? Number(r.qty).toLocaleString('en-US') + ' ' + (r.unit || '') : '—'}</td>
       <td style="padding: 12px 0; border: none; text-align: left; font-family: var(--font-mono); color: #475569;">${r.rate || '—'}</td>
@@ -130,6 +132,7 @@ function renderQuote(data) {
       const tr = document.createElement('tr');
       tr.style.borderBottom = '1px solid #f1f5f9';
       tr.innerHTML = `
+        <td style="padding: 12px 0; border: none; text-align: left; color: #475569; font-weight: 500;">${sNo++}</td>
         <td style="padding: 12px 0; border: none; text-align: left;" title="${r.item || ''}"><span title="${r.item || ''}" style="color: #0f172a; font-weight: 500;">${r.item || ''}</span></td>
         <td style="padding: 12px 0; border: none; text-align: left; color: #475569;">${r.qty ? Number(r.qty).toLocaleString('en-US') + ' ' + (r.unit || '') : '—'}</td>
         <td style="padding: 12px 0; border: none; text-align: left; font-family: var(--font-mono); color: #475569;">${r.rate || '—'}</td>
@@ -147,6 +150,7 @@ function renderQuote(data) {
     tr.style.borderBottom = '1px solid #f1f5f9';
     tr.style.opacity = '0.55';
     tr.innerHTML = `
+      <td style="padding: 12px 0; border: none; text-align: left; color: #64748b; font-weight: 500;">—</td>
       <td style="padding: 12px 0; border: none; text-align: left;" title="${un.name || ''}">
         <span style="color: #64748b; font-weight: 500; text-decoration: line-through;">${un.name || ''}</span>
         <span style="font-size: 11px; color: #e11d48; margin-left: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">(Unavailable)</span>
@@ -353,16 +357,18 @@ async function downloadPDF() {
     // ════════════════════════════════════════════════════
     // Column x positions & widths
     const cols = {
-      desc:  { x: ML,          w: CW * 0.42 },
-      qty:   { x: ML + CW * 0.42, w: CW * 0.18 },
-      rate:  { x: ML + CW * 0.60, w: CW * 0.20 },
-      amt:   { x: ML + CW,     w: 0 }          // right-aligned to edge
+      sno:   { x: ML,             w: 32 },
+      desc:  { x: ML + 32,        w: CW * 0.40 },
+      qty:   { x: ML + 32 + CW * 0.40, w: CW * 0.18 },
+      rate:  { x: ML + 32 + CW * 0.58, w: CW * 0.18 },
+      amt:   { x: ML + CW,        w: 0 }          // right-aligned to edge
     };
 
     // Table header row — no background fill, plain text with bottom rule
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(...MID);
+    doc.text('S.No.',                   cols.sno.x  + 4,  y + 9);
     doc.text('ITEM DESCRIPTION',      cols.desc.x + 4,  y + 9);
     doc.text('QUANTITY',              cols.qty.x  + 4,  y + 9);
     doc.text('UNIT PRICE',            cols.rate.x + 4,  y + 9);
@@ -371,12 +377,18 @@ async function downloadPDF() {
     y += 22;
 
     // Table rows
+    let sNoVal = 1;
     for (const r of allRows) {
       const lineH = 22;
       needsPage(lineH);
 
       const qtyStr = r.qty ? Number(r.qty).toLocaleString('en-US') + ' ' + (r.unit || '') : '—';
       const nameLines = doc.splitTextToSize(r.item || '', cols.desc.w - 8);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...MID);
+      doc.text(String(sNoVal++),  cols.sno.x  + 4,  y + 10);
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8.5);

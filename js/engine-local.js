@@ -353,22 +353,46 @@ async function calcFromText(text, opts = {}) {
 
     for (const fragment of fragments) {
       const matches = [...fragment.matchAll(qtyUnitRx)];
-      if (!matches.length) continue;
+      if (matches.length > 0) {
+        for (let i = 0; i < matches.length; i++) {
+          const match = matches[i];
+          const nextMatch = matches[i + 1];
+          let qty = parseFloat(match[1].replace(/,/g, '')) || 0;
+          let unit = String(match[2] || '').toLowerCase().replace(/\.|s$/g, '').trim();
+          if (unit === 't') unit = 'tons';
 
-      for (let i = 0; i < matches.length; i++) {
-        const match = matches[i];
-        const nextMatch = matches[i + 1];
-        let qty = parseFloat(match[1].replace(/,/g, '')) || 0;
-        let unit = String(match[2] || '').toLowerCase().replace(/\.|s$/g, '').trim();
-        if (unit === 't') unit = 'tons';
+          const before = cleanName(fragment.slice(0, match.index));
+          const after = cleanName(fragment.slice(match.index + match[0].length, nextMatch ? nextMatch.index : fragment.length));
+          const name = before && after
+            ? (before.length >= after.length ? before : after)
+            : (before || after || fragment);
 
-        const before = cleanName(fragment.slice(0, match.index));
-        const after = cleanName(fragment.slice(match.index + match[0].length, nextMatch ? nextMatch.index : fragment.length));
-        const name = before && after
-          ? (before.length >= after.length ? before : after)
-          : (before || after || fragment);
+          entries.push({ qty, unit, name: cleanName(name) || fragment });
+        }
+      } else {
+        // Fallback: search for numbers when no unit is explicitly provided
+        const numRx = /\b([0-9][0-9,]*(?:\.[0-9]+)?)\b/g;
+        const numMatches = [...fragment.matchAll(numRx)];
+        if (numMatches.length > 0) {
+          // Filter out numbers that represent standard grades or designations (e.g., Grade 60, #4)
+          const validMatches = numMatches.filter(match => {
+            const index = match.index;
+            const beforeText = fragment.slice(Math.max(0, index - 15), index).toLowerCase();
+            return !/\b(?:grade|#|no|dia|size|astm|a|tmt)\s*$/i.test(beforeText);
+          });
 
-        entries.push({ qty, unit, name: cleanName(name) || fragment });
+          const activeMatch = validMatches.length > 0 ? validMatches[validMatches.length - 1] : numMatches[numMatches.length - 1];
+          const qty = parseFloat(activeMatch[1].replace(/,/g, '')) || 0;
+          const unit = 'lbs'; // consider unitless quantities as lbs
+
+          const before = cleanName(fragment.slice(0, activeMatch.index));
+          const after = cleanName(fragment.slice(activeMatch.index + activeMatch[0].length));
+          const name = before && after
+            ? (before.length >= after.length ? before : after)
+            : (before || after || fragment);
+
+          entries.push({ qty, unit, name: cleanName(name) || fragment });
+        }
       }
     }
 

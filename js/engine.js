@@ -152,7 +152,7 @@ function saveUnlistedItems() {
         // Extract values entered by the user
         const nameVal = tr.querySelector('[data-field="name"]').value.trim();
         const qtyVal = parseFloat(tr.querySelector('[data-field="qty"]').value) || 0;
-        const unitVal = tr.querySelector('[data-field="unit"]').value.trim();
+        const unitVal = tr.querySelector('[data-field="unit"]').value.trim() || 'lbs';
         const basePriceLb = parseFloat(tr.querySelector('[data-field="basePriceLb"]').value) || 0;
         const fabLb = parseFloat(tr.querySelector('[data-field="fabLb"]').value) || 0;
         const marginPct = parseFloat(tr.querySelector('[data-field="marginPct"]').value) || 0;
@@ -376,7 +376,7 @@ function compileFinalQuotation() {
 
       const itemName = tr.querySelector('[data-field="itemName"]').value.trim();
       const qty = parseFloat(tr.querySelector('[data-field="qty"]').value) || 0;
-      const unit = tr.querySelector('[data-field="unit"]').value.trim();
+      const unit = tr.querySelector('[data-field="unit"]').value.trim() || 'lbs';
       const basePriceLb = parseFloat(tr.querySelector('[data-field="basePriceLb"]').value) || 0;
       const fabLb = parseFloat(tr.querySelector('[data-field="fabLb"]').value) || 0;
       const marginPct = parseFloat(tr.querySelector('[data-field="marginPct"]').value) || 0;
@@ -428,7 +428,7 @@ function compileFinalQuotation() {
     } else if (type === 'unavailable') {
       const nameVal = tr.querySelector('[data-field="name"]').value.trim();
       const qtyVal = parseFloat(tr.querySelector('[data-field="qty"]').value) || 0;
-      const unitVal = tr.querySelector('[data-field="unit"]').value.trim();
+      const unitVal = tr.querySelector('[data-field="unit"]').value.trim() || 'lbs';
 
       if (!isChecked) {
         newUnavailableList.push({ name: nameVal, qty: qtyVal, unit: unitVal });
